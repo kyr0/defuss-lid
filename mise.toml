@@ -1,0 +1,6 @@
+# Development toolchain, installed by `make setup` (mise install). The package itself supports Node.js >= 20.6 and
+# Bun; CI tests those ranges separately. uv provisions the Python interpreter declared by pyproject.toml.
+[tools]
+node = "26.11.1"
+bun = "1.4.3"
+uv = "0.13.0"

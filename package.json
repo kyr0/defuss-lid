@@ -1,0 +1,119 @@
+{
+  "name": "defuss-lid",
+  "version": "0.3.0",
+  "description": "Language identification in 78 kB: pretrained fastText and CLD3 language packs with a dependency-free runtime for Node.js, Bun and browsers.",
+  "type": "module",
+  "license": "(MIT AND CC-BY-SA-3.0 AND Apache-2.0)",
+  "author": "Aron Homberg <info@aron-homberg.de>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kyr0/defuss-lid.git"
+  },
+  "homepage": "https://github.com/kyr0/defuss-lid#readme",
+  "bugs": {
+    "url": "https://github.com/kyr0/defuss-lid/issues"
+  },
+  "keywords": [
+    "defuss",
+    "language-identification",
+    "language-detection",
+    "lid",
+    "fasttext",
+    "cld3",
+    "wasm",
+    "browser",
+    "edge"
+  ],
+  "sideEffects": false,
+  "packageManager": "bun@1.4.3",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./fasttext": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./cld3": {
+      "types": "./dist/cld3.d.ts",
+      "default": "./dist/cld3.js"
+    },
+    "./cld3-pack": {
+      "types": "./dist/cld3-pack.d.ts",
+      "default": "./dist/cld3-pack.js"
+    },
+    "./packs": {
+      "types": "./dist/packs/index.d.ts",
+      "default": "./dist/packs/index.js"
+    },
+    "./packs/der_3": {
+      "types": "./dist/packs/der_3.browser.d.ts",
+      "node": "./dist/packs/der_3.node.js",
+      "default": "./dist/packs/der_3.browser.js"
+    },
+    "./packs/deferi_6": {
+      "types": "./dist/packs/deferi_6.browser.d.ts",
+      "node": "./dist/packs/deferi_6.node.js",
+      "default": "./dist/packs/deferi_6.browser.js"
+    },
+    "./packs/major_20": {
+      "types": "./dist/packs/major_20.browser.d.ts",
+      "node": "./dist/packs/major_20.node.js",
+      "default": "./dist/packs/major_20.browser.js"
+    },
+    "./packs/full": {
+      "types": "./dist/packs/full.browser.d.ts",
+      "node": "./dist/packs/full.node.js",
+      "default": "./dist/packs/full.browser.js"
+    },
+    "./models/*": "./models/*",
+    "./runtime/*": "./runtime/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "runtime",
+    "models/v0.3",
+    "README.md",
+    "LICENSE",
+    "NOTICE.md",
+    "licenses"
+  ],
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "build": "pkgroll --clean-dist --target=es2022",
+    "models": "node scripts/fetch-models.mjs",
+    "lint": "oxlint --deny-warnings && tsc -p tsconfig.json && node scripts/verify.mjs",
+    "test": "vitest run",
+    "test:bun": "bun --bun vitest run",
+    "coverage": "vitest run --coverage --reporter=default --reporter=json --outputFile.json=coverage/tests.json",
+    "e2e": "node scripts/e2e.mjs",
+    "docs": "node scripts/docs.mjs",
+    "serve": "node scripts/serve.mjs",
+    "bench": "node scripts/bench.mjs",
+    "prepack": "node scripts/fetch-models.mjs --check && bun run build"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "26.6.6",
+    "@typescript/typescript6": "6.0.2",
+    "@vitest/coverage-v8": "5.0.5",
+    "cld3-asm": "4.0.0",
+    "oxlint": "1.90.0",
+    "pkgroll": "2.29.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
+  },
+  "peerDependencies": {
+    "cld3-asm": "4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "cld3-asm": {
+      "optional": true
+    }
+  }
+}

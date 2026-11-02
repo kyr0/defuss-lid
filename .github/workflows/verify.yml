@@ -1,0 +1,95 @@
+# The same verbs as local development (`make verify`), so CI cannot drift from the local gate.
+name: verify
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '17 4 * * 1' # weekly: the Hugging Face release must still match models.lock.json
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: make verify (lint, Vitest on Node + Bun, pytest, coverage, e2e in Chromium/Firefox/WebKit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # scripts/verify.mjs scans the whole history for AI co-author trailers
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: actions/cache@v6
+        with:
+          path: models/v0.3
+          key: models-${{ hashFiles('models.lock.json') }}
+      - uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+      - run: make setup
+      # System libraries for the WebKit and Firefox builds (Chromium needs few); needs the runner's sudo.
+      - run: bunx playwright install-deps chromium firefox webkit
+      - run: make verify
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: e2e-output
+          path: output/
+          retention-days: 14
+
+  runtimes:
+    name: Node ${{ matrix.node }} / Bun on ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-latest, node: '20', vitest: false} # engines floor: tarball examples only (Vitest 5 needs 22.12+)
+          - {os: ubuntu-latest, node: '22', vitest: true}
+          - {os: ubuntu-latest, node: '24', vitest: true}
+          - {os: macos-latest, node: '26', vitest: true}
+          - {os: windows-latest, node: '26', vitest: true}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.3'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+      - uses: actions/cache@v6
+        with:
+          path: models/v0.3
+          key: models-${{ hashFiles('models.lock.json') }}
+      - run: bun install --frozen-lockfile
+      - run: bun run models
+      - run: bun run build
+      - if: matrix.vitest
+        run: bun run test
+      - if: matrix.vitest
+        run: bun run test:bun
+      - run: uv run pytest -q
+      # Every README/guide/site example on this Node version and on Bun, from the packed tarball (browsers run in `verify`).
+      - if: runner.os != 'Windows'
+        run: bun run e2e
+        env:
+          E2E_SKIP_BROWSERS: '1'
+
+  release-mirror:
+    name: Hugging Face release matches models.lock.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '26'
+      - run: node scripts/fetch-models.mjs --live

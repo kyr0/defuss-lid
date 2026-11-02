@@ -1,0 +1,227 @@
+/* defuss-lid website: page layout and the demo's own composition. Colours, radii and shadows come from defuss-shadcn
+   tokens; components keep their documented markup, so this file only arranges them. */
+@layer components {
+  /* the base reset the defuss-shadcn docs site applies, which its marketing blocks assume */
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; line-height: 1.6; background: var(--background); color: var(--foreground); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  /* component rules set display, which would otherwise beat the hidden attribute */
+  [hidden] { display: none !important; }
+  code { font-family: var(--font-mono); font-size: .875em; }
+  :where(p, li, dd) > code, .mk-hero-desc code, .lid-hero-note code, .mk-stat-label code {
+    padding: .1em .35em; border-radius: var(--radius-sm); background: color-mix(in oklab, var(--muted) 85%, transparent);
+  }
+
+  /* clip, not hidden: the sticky header must keep working */
+  .lid-page { overflow-x: clip; }
+  .lid-main { display: flex; flex-direction: column; align-items: center; gap: clamp(4.5rem, 10vw, 8rem); padding-block-end: clamp(4.5rem, 10vw, 8rem); }
+  /* every section: 76rem column, a 1rem (16px) gutter on phones; nested marketing blocks drop their own gutter */
+  .lid-section { width: 100%; max-width: 76rem; margin-inline: auto; padding-inline: 1rem; scroll-margin-top: 5.5rem; min-width: 0; }
+  .lid-section > :is(.mk-features, .mk-cta), .lid-hero-wrap > :is(.mk-hero, .mk-stats) { padding-inline: 0; }
+  .lid-icon { width: 1em; height: 1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .lid-skip { position: absolute; inset-block-start: .5rem; inset-inline-start: .5rem; z-index: 100; translate: 0 -200%; }
+  .lid-skip:focus-visible { translate: 0 0; }
+
+  /* ---- hero ------------------------------------------------------------------------------------------------------ */
+  .lid-hero-wrap { width: 100%; max-width: 76rem; padding-inline: 1rem; display: flex; flex-direction: column; gap: clamp(2rem, 6vw, 3.5rem); }
+  .lid-hero-wrap .mk-hero[data-variant="glow"] { padding-block: clamp(3.5rem, 9vw, 6rem) 0; }
+  .mk-hero-pill { text-decoration: none; color: inherit; }
+  .mk-hero-pill > span:not(.badge) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lid-accent { background: linear-gradient(90deg, var(--chart-1), var(--chart-3)); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
+  .lid-runtimes { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin: .25rem 0; padding: 0; list-style: none; }
+  .lid-runtimes .badge { gap: .35rem; }
+  .lid-hero-note { margin: .5rem 0 0; max-width: 34rem; font-size: .875rem; color: var(--muted-foreground); text-wrap: pretty; }
+  .lid-band .mk-stats-band { border-radius: var(--radius-xl); }
+  .lid-band .mk-stat-value { font-variant-numeric: tabular-nums; }
+  .lid-band .mk-stat-label code { background: color-mix(in oklch, currentColor 14%, transparent); }
+
+  /* ---- demo ------------------------------------------------------------------------------------------------------ */
+  .lid-demo {
+    display: flex; flex-direction: column; margin-block-start: 2.5rem; padding: clamp(1rem, 3vw, 1.75rem); gap: 1.5rem;
+    box-shadow: var(--shadow-xl), 0 30px 80px -40px color-mix(in oklch, var(--chart-2) 55%, transparent);
+  }
+  .lid-demo-grid { display: grid; gap: 1.5rem clamp(1.5rem, 4vw, 2.5rem); grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 56rem) { .lid-demo-grid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); } }
+  .lid-demo-input, .lid-demo-output, .lid-field { display: flex; flex-direction: column; gap: .5rem; min-width: 0; }
+  .lid-demo-output { gap: 1rem; }
+  .lid-demo-input .textarea { min-height: 9rem; font-size: 1rem; }
+  .lid-hint { margin: 0; font-size: .8125rem; color: var(--muted-foreground); overflow-wrap: anywhere; }
+  .lid-hint a { color: inherit; }
+  .lid-samples { display: flex; flex-wrap: wrap; align-items: center; gap: .375rem; margin-block-start: .5rem; }
+  .lid-samples-label { width: 100%; font-size: .8125rem; font-weight: 600; color: var(--muted-foreground); }
+  .lid-samples .btn[data-active] { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+
+  .lid-status-row { display: flex; align-items: center; gap: .5rem; min-height: 2rem; flex-wrap: wrap; }
+  .lid-status-row p { margin: 0; font-size: .875rem; font-weight: 500; overflow-wrap: anywhere; }
+  .lid-status-dot { width: .5rem; height: .5rem; border-radius: 50%; background: oklch(0.65 0.17 150); }
+  .lid-status-row:not([data-state="ready"]) .lid-status-dot { display: none; }
+  .lid-status-row:not([data-state="loading"]) .spinner { display: none; }
+  .lid-status-row[data-state="error"] p { color: var(--destructive); }
+
+  .lid-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .5rem; margin: 0; }
+  .lid-metrics > div { padding: .5rem .75rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: color-mix(in oklab, var(--muted) 45%, transparent); min-width: 0; }
+  .lid-metrics dt { font-size: .75rem; color: var(--muted-foreground); }
+  .lid-metrics dd { margin: 0; font-family: var(--font-mono); font-size: .875rem; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .lid-results-title { margin: 0 0 .5rem; font-size: .8125rem; font-weight: 600; color: var(--muted-foreground); }
+  .lid-results { display: grid; gap: .5rem; margin: 0; padding: 0; list-style: none; min-height: 3.25rem; transition: opacity .2s ease; }
+  .lid-results[aria-busy="true"] { opacity: .45; }
+  .lid-result {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: .375rem 1rem;
+    padding: .625rem .875rem; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--card);
+  }
+  .lid-result:first-child { border-color: color-mix(in oklab, var(--chart-2) 55%, var(--border)); background: color-mix(in oklab, var(--chart-2) 7%, var(--card)); }
+  .lid-result .progress { --progress-color: color-mix(in oklab, var(--chart-2) 45%, var(--muted-foreground)); }
+  .lid-result:first-child .progress { --progress-color: var(--chart-3); }
+  .lid-result-lang { display: flex; align-items: baseline; gap: .5rem; min-width: 0; flex-wrap: wrap; }
+  .lid-result-name { font-weight: 600; overflow-wrap: anywhere; }
+  .lid-result:first-child .lid-result-name { font-size: 1.125rem; }
+  .lid-result-score { font-family: var(--font-mono); font-size: .875rem; font-variant-numeric: tabular-nums; text-align: end; }
+  .lid-result .progress { grid-column: 1 / -1; width: 100%; }
+  .lid-result .badge { align-self: center; }
+  .lid-results-empty { margin: 0; padding: .875rem; border: 1px dashed var(--border); border-radius: var(--radius-lg); font-size: .875rem; color: var(--muted-foreground); }
+
+  .lid-demo-note { display: flex; gap: .625rem; align-items: flex-start; padding: .75rem 1rem; border-radius: var(--radius-lg); background: color-mix(in oklab, var(--muted) 60%, transparent); font-size: .8125rem; color: var(--muted-foreground); }
+  .lid-demo-note .lid-icon { margin-block-start: .25rem; color: var(--foreground); }
+  .lid-demo-note p { margin: 0; text-wrap: pretty; }
+
+  /* ---- packs ----------------------------------------------------------------------------------------------------- */
+  /* two columns: each card carries a comparison table that needs the width */
+  .lid-packs { display: grid; gap: 1rem; margin-block-start: 2.5rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 48rem) { .lid-packs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  /* .card is a plain block: a flex column lets the content grow, so every footer sits on the card's bottom edge */
+  .lid-pack { display: flex; flex-direction: column; min-width: 0; }
+  .lid-pack .card-description code { white-space: nowrap; }
+  .lid-pack-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
+  .lid-pack .card-title code { font-size: 1.125rem; padding: 0; background: none; }
+  .lid-pack .card-content { display: flex; flex-direction: column; gap: .5rem; flex: 1; }
+  .lid-pack-bytes { margin: 0; font-size: 1.75rem; font-weight: 600; line-height: 1.2; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .lid-pack-bytes-note { font-size: .875rem; font-weight: 500; letter-spacing: 0; color: var(--muted-foreground); }
+  .lid-budget { width: 100%; margin-block: .25rem; font-size: .8125rem; }
+  .lid-budget :is(th, td) { padding: .3rem .5rem; height: auto; }
+  /* inset both ends so the header band and the last column do not touch the card edge */
+  .lid-budget :is(th, td):first-child { padding-inline-start: .75rem; }
+  .lid-budget :is(th, td):last-child { padding-inline-end: .75rem; }
+  .lid-budget thead th { font-weight: 600; color: var(--foreground); }
+  .lid-budget tbody th { font-weight: 400; color: var(--muted-foreground); text-align: start; background: none; }
+  .lid-budget td { color: var(--muted-foreground); }
+  /* the better value of each pair stands out by contrast; a screen reader hears "(better)" instead */
+  .lid-budget td[data-better] { color: var(--foreground); }
+  /* only the deciding figure, all-in gzipped, is bold */
+  .lid-budget .lid-budget-total :is(th, td) { color: var(--foreground); font-weight: 600; }
+  .lid-eyebrow { font-size: .8125rem; }
+  .lid-pack-meta { margin: 0; font-size: .8125rem; color: var(--muted-foreground); overflow-wrap: anywhere; }
+  .lid-langs { display: flex; flex-wrap: wrap; gap: .3rem; margin: .25rem 0 0; padding: 0; list-style: none; }
+  .lid-langs .badge { font-family: var(--font-mono); }
+  .lid-langs-all .collapsible-content { padding-block-start: .5rem; }
+  .lid-import { font-size: .8125rem; overflow-wrap: anywhere; color: var(--muted-foreground); }
+  .lid-footnote { max-width: 48rem; margin: 1.5rem auto 0; font-size: .8125rem; color: var(--muted-foreground); text-align: center; text-wrap: pretty; }
+
+  /* ---- how it works ---------------------------------------------------------------------------------------------- */
+  .lid-steps { display: grid; gap: .875rem; margin: 0; padding: 0; list-style: none; counter-reset: lid-step; }
+  .lid-steps li { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: .125rem .75rem; counter-increment: lid-step; }
+  .lid-steps li::before {
+    content: counter(lid-step); grid-row: span 2; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%;
+    font-family: var(--font-mono); font-size: .8125rem; font-weight: 600;
+    background: color-mix(in oklch, var(--chart-2) 18%, transparent); box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--chart-2) 40%, transparent);
+  }
+  .lid-steps strong { font-weight: 600; }
+  .lid-steps span { font-size: .9375rem; color: var(--muted-foreground); text-wrap: pretty; }
+  .lid-how-block { display: flex; flex-direction: column; gap: 1.25rem; }
+  /* the block stretches its copy (flex: 1) to align two image features; here the steps follow the copy directly */
+  .lid-section .mk-feature .mk-feature-copy { flex: none; }
+  /* bento: 2 columns from 34rem, 3 from 56rem, so the wide and tall tiles always fill a rectangle */
+  @container mk-features (min-width: 34rem) { .lid-section .mk-features-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @container mk-features (min-width: 56rem) { .lid-section .mk-features-bento { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .lid-how-title { margin: 0; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; }
+  /* tile headings are h4 (under the block's h3); same look as the block's own h3 rule */
+  .mk-bento-tile h4 { margin: .5rem 0 0; font-size: 1.125rem; font-weight: 600; line-height: 1.3; }
+  .mk-bento-tile .lid-icon { width: 1.5rem; height: 1.5rem; }
+  .mk-bento-tile[data-tone="primary"] code { background: color-mix(in oklch, currentColor 16%, transparent); }
+  .mk-feature-cards[data-variant="boxed"] { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); }
+  .mk-feature-cards[data-variant="boxed"] .mk-feature-card-desc { font-size: .9375rem; }
+
+  /* ---- accuracy -------------------------------------------------------------------------------------------------- */
+  .lid-table-note { margin: 2.5rem 0 .75rem; font-size: .875rem; color: var(--muted-foreground); }
+  .lid-scroll-hint { display: none; }
+  @media (max-width: 48rem) { .lid-scroll-hint { display: inline; } }
+  .lid-table-card { padding: 0; overflow: hidden; }
+  .lid-table-scroll { max-width: 100%; overflow-x: auto; }
+  .lid-table-scroll:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+  #accuracy-table { min-width: 44rem; }
+  #accuracy-table :is(th, td) { padding-inline: 1rem; }
+  #accuracy-table th { vertical-align: bottom; }
+  .lid-num { text-align: end; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  th.lid-num { font-family: var(--font-sans); white-space: normal; }
+  #accuracy-table tbody th { background: none; font-weight: 400; }
+  #accuracy-table tbody th code { font-size: .875rem; }
+  .lid-accuracy-notes { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem 2rem; margin-block-start: 1.25rem; }
+  .lid-accuracy-notes p { flex: 1 1 28rem; margin: 0; font-size: .875rem; color: var(--muted-foreground); text-wrap: pretty; }
+  .lid-coverage-block { display: grid; gap: 1.5rem; margin-block-start: 3rem; justify-items: center; text-align: center; }
+  .lid-coverage { width: 100%; }
+  /* two rings per row on a phone instead of a column of four */
+  .lid-coverage .mk-stats-rings { grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr)); }
+  .lid-coverage-note { max-width: 40rem; margin: 0; font-size: .875rem; color: var(--muted-foreground); text-wrap: pretty; }
+
+  /* ---- use it ---------------------------------------------------------------------------------------------------- */
+  .lid-use { display: flex; flex-direction: column; gap: 2.5rem; margin-block-start: 2.5rem; }
+  .lid-use-step { display: flex; flex-direction: column; gap: .875rem; min-width: 0; }
+  .lid-use-pair { display: grid; gap: 2.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr)); }
+  .lid-use-title { display: flex; align-items: center; gap: .625rem; margin: 0; font-size: 1.25rem; font-weight: 600; }
+  .lid-step-num { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border-radius: 50%; background: var(--primary); color: var(--primary-foreground); font-size: .875rem; font-family: var(--font-mono); }
+  .lid-use-desc { margin: 0; color: var(--muted-foreground); text-wrap: pretty; }
+  .lid-tabs { display: flex; flex-direction: column; gap: 1rem; }
+  .lid-tabs .tab-list { max-width: 100%; }
+  .lid-tabs .tab-content { display: flex; flex-direction: column; gap: .875rem; }
+  .lid-api code { font-size: .8125rem; overflow-wrap: break-word; }
+  .lid-api :is(th, td) { vertical-align: top; white-space: normal; }
+  .lid-api-from { display: block; margin-block-start: .25rem; font-size: .8125rem; color: var(--muted-foreground); }
+
+  /* code blocks: site.js splits each block into one span per line (keeping textContent), so numbers and colours work */
+  .lid-code { min-width: 0; }
+  .lid-code pre { max-width: 100%; }
+  .mk-code-block code:not([data-lines]) { padding-inline: 1rem; white-space: pre; }
+  .mk-code-block code > span { min-height: 1.7em; }
+  /* wrap instead of cutting long lines; numbered continuation lines hang past the 2rem + 1rem number column */
+  .lid-code code > span { white-space: pre-wrap; overflow-wrap: anywhere; }
+  /* the number leaves the text flow: as an inline-block, WebKit would wrap a long first word onto its own line */
+  .lid-code pre[data-numbers] code > span { position: relative; padding-inline-start: 4rem; }
+  .lid-code pre[data-numbers] code > span::before { position: absolute; inset-inline-start: 1rem; margin: 0; }
+  .mk-code-block-n { color: oklch(0.8 0.12 70); }
+  .mk-code-block-copy[data-copied] { color: oklch(0.75 0.15 150); }
+
+  /* ---- CTA and footer -------------------------------------------------------------------------------------------- */
+  .mk-cta code { background: color-mix(in oklch, currentColor 14%, transparent); }
+  .mk-footer-list code { font-size: .8125rem; }
+  .mk-footer-copy a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+  .mk-footer-copy { text-wrap: pretty; }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .lid-results { transition: none; }
+  }
+  @media (forced-colors: active) {
+    .lid-accent { color: CanvasText; background: none; }
+    .lid-status-dot { background: CanvasText; }
+    .lid-budget td[data-better] { text-decoration: underline; }
+  }
+}
+
+/* footer consulting card: a leaf-cornered panel with a squircle portrait in a gold halo (as on the other defuss sites) */
+@layer components {
+  .lid-icon-fill { fill: currentColor; stroke: none; }
+  .lid-ad {
+    --shape-round: 2rem; display: flex; flex-direction: column; gap: .875rem; padding: 1.25rem;
+    border: 1px solid var(--border); box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, color-mix(in oklch, var(--chart-1) 16%, var(--card)), var(--card) 65%);
+  }
+  .lid-ad-head { display: flex; align-items: center; gap: .875rem; }
+  .lid-ad-portrait { width: 5.5rem; flex: none; }
+  .lid-ad-portrait img { display: block; width: 100%; height: auto; }
+  .lid-ad-name { margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--foreground); }
+  .lid-ad-role { margin: 0; font-size: .8125rem; line-height: 1.5; color: var(--muted-foreground); }
+  .lid-ad .btn { align-self: flex-start; }
+  /* the card is the widest footer column on large screens */
+  @media (min-width: 64rem) { .lid-footer-nav.mk-footer-nav { grid-template-columns: 1fr 1fr 1fr 1.6fr; } }
+}

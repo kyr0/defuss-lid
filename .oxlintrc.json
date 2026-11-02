@@ -1,0 +1,4 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "ignorePatterns": ["dist/**", "docs/assets/lib/**", "runtime/cld3-glue.js", "runtime/cld3-layout.js", "coverage/**", "output/**", "tmp/**", "data/**", "runs/**", "reports/**", "models/**", ".venv/**"]
+}

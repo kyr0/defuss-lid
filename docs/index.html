@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>defuss-lid · language identification in 78 kB</title>
+  <meta name="description" content="Language identification with pretrained fastText and Google CLD3 models, compressed into small language packs: 3 languages in 78.0 kB, 109 in 130.4 kB. Runs in Node.js, Bun and browsers, with no inference service.">
+  <meta name="color-scheme" content="light dark">
+  <meta property="og:title" content="defuss-lid · language identification in 78 kB">
+  <meta property="og:description" content="Pretrained fastText and CLD3 language identification, compressed into small language packs for Node.js, Bun and browsers.">
+  <meta property="og:type" content="website">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script>
+    // Before the first paint and before df$ exists (defuss-shadcn Dark Mode guide): the saved choice, else the OS
+    // default. Synchronous on purpose, so a dark visitor never sees a light flash.
+    let saved = '';
+    try {
+      const raw = JSON.parse(localStorage.getItem('defuss-shadcn-theme'));
+      saved = raw && raw.format === 'defuss-store' ? raw.value : raw;
+    } catch {}
+    if (saved === 'dark' || (!saved && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.colorScheme = 'dark';
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/defuss-shadcn@0.9.12/dist/components/core.min.css" integrity="sha384-qUQCm/MM2DNkdT3uEdx8Mpocj+GwXlgLat0FnWv657c16tHWOouZFT2nV7kg5pBE" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/defuss-shadcn@0.9.12/dist/theme/utils/shapes.css" integrity="sha384-aZOejDS3Wl7RTrk7xhF91OV7MwlLT5+HBFqsCgc1NJAObqjt5bamU3NxzVEdhZew" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/defuss-shadcn@0.9.12/dist/components/all.min.css" integrity="sha384-D6ChEYfIRnfJpWB03vSS4b4b1ZdHsnCNUwg2VBFrBkjDVHIVvdVDXaJ1M2hFAdK2" crossorigin="anonymous">
+  <link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+<svg class="sr-only" aria-hidden="true">
+  <symbol id="i-logo" viewBox="0 0 24 24"><path d="m5 8 6 6m-7 0 6-6 2-3M2 5h12M7 2h1m14 20-5-10-5 10m2-4h6"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-17.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-7-7 7 7-7 7"/></symbol>
+  <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14m7-7-7 7-7-7"/></symbol>
+  <symbol id="i-linkedin" viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></symbol>
+  <symbol id="i-external" viewBox="0 0 24 24"><path d="M7 7h10v10M7 17 17 7"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M10 12.5 8 15l2 2.5m4-5 2 2.5-2 2.5M14 2v4a2 2 0 0 0 2 2h4"/><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/></symbol>
+  <symbol id="i-package" viewBox="0 0 24 24"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12m0 0 8.7-5M12 12 3.3 7"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5M12 22V12"/></symbol>
+  <symbol id="i-github" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.4 5.4 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12m8-8L8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M10 20a1 1 0 0 0 .55.9l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .52-1.34L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.74 1.67l7.22 7.99A2 2 0 0 1 10 14z"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12.83 2.18 8.58 3.9a1 1 0 0 1 0 1.83l-8.58 3.9a2 2 0 0 1-1.66 0L2.6 7.91a1 1 0 0 1 0-1.83l8.58-3.9a2 2 0 0 1 1.66 0Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65M22 12.65l-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></symbol>
+  <symbol id="i-cpu" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2m0 16v2M2 15h2m-2-6h2m16 6h2m-2-6h2M9 2v2m0 16v2"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2m-5-1 2-2m-5-1 2-2m7 11 2-2"/></symbol>
+  <symbol id="i-text" viewBox="0 0 24 24"><path d="M17 6.1H3M21 12.1H3M15.1 18H3"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5m5 4a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+</svg>
+
+<a class="lid-skip btn" data-variant="outline" data-size="sm" href="#demo">Skip to the live demo</a>
+
+<div id="top" class="lid-page">
+  <header class="mk-header" data-variant="floating">
+    <div class="mk-header-inner">
+      <a href="#top" class="mk-header-brand"><svg class="lid-icon" aria-hidden="true"><use href="#i-logo"/></svg><span class="mk-header-name">defuss-lid</span></a>
+      <nav class="mk-header-nav" aria-label="Main">
+        <ul class="nav-menu-list">
+          <li class="nav-menu-item"><a class="nav-menu-link" href="#demo">Demo</a></li>
+          <li class="nav-menu-item"><a class="nav-menu-link" href="#packs">Packs</a></li>
+          <li class="nav-menu-item"><a class="nav-menu-link" href="#how">How it works</a></li>
+          <li class="nav-menu-item"><a class="nav-menu-link" href="#accuracy">Accuracy</a></li>
+          <li class="nav-menu-item"><a class="nav-menu-link" href="#use">Use it</a></li>
+        </ul>
+      </nav>
+      <div class="mk-header-actions">
+        <label class="swap" data-variant="rotate" data-size="sm" title="Dark mode">
+          <input type="checkbox" id="theme-toggle" aria-label="Dark mode">
+          <span class="swap-on"><svg class="lid-icon" aria-hidden="true"><use href="#i-moon"/></svg></span>
+          <span class="swap-off"><svg class="lid-icon" aria-hidden="true"><use href="#i-sun"/></svg></span>
+        </label>
+        <a class="btn mk-header-wide" data-variant="outline" data-size="sm" href="https://huggingface.co/kyr0/defuss-lid-1.0" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-box"/></svg>Hugging Face<span class="sr-only"> (opens in a new tab)</span></a>
+        <a class="btn mk-header-wide" data-variant="outline" data-size="sm" href="https://www.npmjs.com/package/defuss-lid" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-package"/></svg>npm<span class="sr-only"> package (opens in a new tab)</span></a>
+        <a class="btn mk-header-wide" data-variant="ghost" data-size="icon" href="https://github.com/kyr0/defuss-lid" target="_blank" rel="noopener" aria-label="defuss-lid on GitHub (opens in a new tab)"><svg class="lid-icon" aria-hidden="true"><use href="#i-github"/></svg></a>
+        <button type="button" class="btn mk-header-menu" data-variant="ghost" data-size="icon" data-sheet-trigger="lid-menu" aria-haspopup="dialog" aria-label="Open menu"><svg class="lid-icon" aria-hidden="true"><use href="#i-menu"/></svg></button>
+      </div>
+    </div>
+    <dialog id="lid-menu" class="sheet" data-side="right" role="dialog" aria-modal="true" aria-labelledby="lid-menu-title">
+      <div class="sheet-content">
+        <div class="sheet-header">
+          <h2 class="sheet-title" id="lid-menu-title">defuss-lid</h2>
+        </div>
+        <div class="sheet-body">
+          <p class="mk-header-sheet-label">This page</p>
+          <ul class="mk-header-sheet-nav">
+            <li><a href="#demo" data-sheet-close>Demo <small>Identify text in this tab</small></a></li>
+            <li><a href="#packs" data-sheet-close>Packs <small>Five models, exact sizes</small></a></li>
+            <li><a href="#how" data-sheet-close>How it works</a></li>
+            <li><a href="#accuracy" data-sheet-close>Accuracy <small>Held-out FLORES and MASSIVE</small></a></li>
+            <li><a href="#use" data-sheet-close>Use it <small>Node.js, Bun, browsers</small></a></li>
+          </ul>
+        </div>
+        <div class="sheet-footer mk-header-sheet-actions">
+          <a class="btn" data-variant="outline" href="https://github.com/kyr0/defuss-lid" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-github"/></svg>GitHub<span class="sr-only"> (opens in a new tab)</span></a>
+          <a class="btn" data-variant="outline" href="https://huggingface.co/kyr0/defuss-lid-1.0" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-box"/></svg>Hugging Face<span class="sr-only"> (opens in a new tab)</span></a>
+          <a class="btn" data-variant="outline" href="https://www.npmjs.com/package/defuss-lid" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-package"/></svg>npm<span class="sr-only"> package (opens in a new tab)</span></a>
+        </div>
+      </div>
+      <button class="sheet-close-x" type="button" data-sheet-close aria-label="Close menu"><svg class="lid-icon" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </dialog>
+  </header>
+
+  <main class="lid-main">
+
+    <div class="lid-hero-wrap">
+      <section class="mk-hero" data-variant="glow" aria-labelledby="hero-title">
+        <div class="mk-hero-copy">
+          <a class="mk-hero-pill" href="#packs"><span class="badge" data-variant="default" data-size="sm">v0.3.0</span><span>Pretrained fastText and CLD3, packed small</span><svg class="lid-icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <h1 class="mk-hero-title" id="hero-title">Language identification in <span class="lid-accent">78&nbsp;kB</span></h1>
+          <p class="mk-hero-desc">defuss-lid tells you which language a text is written in, right where the text is. Pretrained fastText and Google CLD3 models, compressed into small language packs, run in your process or browser tab: no inference service, no API key, no text sent anywhere.</p>
+          <ul class="lid-runtimes" aria-label="Runs in">
+            <li class="badge" data-variant="secondary"><svg class="lid-icon" aria-hidden="true"><use href="#i-cpu"/></svg>Node.js</li>
+            <li class="badge" data-variant="secondary"><svg class="lid-icon" aria-hidden="true"><use href="#i-cpu"/></svg>Bun</li>
+            <li class="badge" data-variant="secondary"><svg class="lid-icon" aria-hidden="true"><use href="#i-layers"/></svg>Browsers</li>
+          </ul>
+          <div class="mk-hero-actions">
+            <a class="btn" data-size="lg" href="#demo">Try the live demo<svg class="lid-icon" aria-hidden="true"><use href="#i-arrow-down"/></svg></a>
+            <a class="btn" data-variant="outline" data-size="lg" href="#use">Use it in your app</a>
+          </div>
+          <p class="lid-hero-note">78&nbsp;kB is the <code>der_3</code> pack: German, English and Russian in 78.0&nbsp;kB. Twenty languages fit in 110.4&nbsp;kB, all 109 CLD3 labels in 130.4&nbsp;kB.</p>
+        </div>
+      </section>
+
+      <section class="mk-stats lid-band" aria-label="Key figures">
+        <div class="mk-stats-band">
+          <div class="mk-stat"><span class="mk-stat-value">78.0&nbsp;kB</span><span class="mk-stat-label">pack file for <code>der_3</code> (de, en, ru), plus the small fastText runtime</span></div>
+          <div class="mk-stat"><span class="mk-stat-value">98.42%</span><span class="mk-stat-label"><code>der_3</code> top-1 on the first 20 code points of FLORES sentences</span></div>
+          <div class="mk-stat"><span class="mk-stat-value">130.4&nbsp;kB</span><span class="mk-stat-label">pack file for all 109 CLD3 labels (<code>full</code>), plus its WebAssembly runtime</span></div>
+          <div class="mk-stat"><span class="mk-stat-value">0</span><span class="mk-stat-label">inference servers: it runs where your code runs</span></div>
+        </div>
+      </section>
+    </div>
+
+    <section id="demo" class="lid-section" aria-labelledby="demo-title">
+      <header class="mk-section-header" data-align="center">
+        <div class="mk-section-header-copy">
+          <span class="badge lid-eyebrow" data-variant="secondary">Live demo</span>
+          <h2 class="mk-section-header-title" id="demo-title">Identify a language as you type</h2>
+          <p class="mk-section-header-desc">Pick a model: this tab downloads it once from Hugging Face (a pinned revision) and runs it locally. Your text never leaves the browser.</p>
+        </div>
+      </header>
+
+      <div class="card lid-demo">
+        <div class="lid-demo-grid">
+          <div class="lid-demo-input">
+            <label class="label" for="demo-text">Text to identify</label>
+            <textarea class="textarea" id="demo-text" data-rows="5" data-max-rows="10" dir="auto" spellcheck="false" aria-describedby="demo-text-hint">Die Sonne scheint, und wir gehen heute Nachmittag im Park spazieren.</textarea>
+            <p class="lid-hint" id="demo-text-hint">Results update while you type. Short snippets are harder than full sentences.</p>
+            <div class="lid-samples" role="group" aria-labelledby="samples-label">
+              <span class="lid-samples-label" id="samples-label">Samples</span>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="de" data-text="Die Sonne scheint, und wir gehen heute Nachmittag im Park spazieren.">German</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="en" data-text="The quick brown fox jumps over the lazy dog near the river bank.">English</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="fr" data-text="Je voudrais réserver une table pour deux personnes ce soir, s’il vous plaît.">French</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="es" data-text="¿Dónde está la estación de tren más cercana, por favor?">Spanish</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="it" data-text="Domani andiamo al mare con tutta la famiglia, se il tempo lo permette.">Italian</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="ru" data-text="Сегодня вечером мы идём в театр смотреть новый спектакль.">Russian</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="uk" data-text="Завтра вранці ми зустрінемося в кав’ярні біля вокзалу.">Ukrainian</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="ja" data-text="明日の朝、駅の近くの喫茶店で会いましょう。">Japanese</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="ar" data-text="سنذهب غدا إلى البحر مع العائلة إذا سمح الطقس بذلك.">Arabic</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="la" data-text="Gallia est omnis divisa in partes tres, quarum unam incolunt Belgae.">Latin</button>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" data-sample="is" data-text="Við förum á ströndina á morgun ef veðrið leyfir.">Icelandic</button>
+            </div>
+          </div>
+
+          <div class="lid-demo-output">
+            <div class="lid-field">
+              <label class="label" for="demo-model">Model</label>
+              <select class="select" id="demo-model" aria-describedby="demo-model-hint">
+                <option value="der_3" selected>der_3 · fastText · de, en, ru</option>
+                <option value="deferi_6">deferi_6 · fastText · 6 European languages</option>
+                <option value="major_20">major_20 · CLD3 · 20 languages</option>
+                <option value="full">full · CLD3 · 109 labels</option>
+              </select>
+              <p class="lid-hint" id="demo-model-hint">File: <a id="demo-file" href="https://huggingface.co/kyr0/defuss-lid-1.0/blob/24d27e5b42d002d69fded6301607160919151370/der_3.dlid" target="_blank" rel="noopener"><code id="demo-file-name">der_3.dlid</code><span class="sr-only"> on Hugging Face (opens in a new tab)</span></a></p>
+            </div>
+
+            <div class="lid-status-row" id="demo-state" data-state="loading">
+              <svg class="spinner" id="demo-spinner" data-size="sm" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              <span class="lid-status-dot" aria-hidden="true"></span>
+              <p id="demo-status" role="status">Loading the runtime...</p>
+              <button type="button" class="btn" data-variant="outline" data-size="sm" id="demo-retry" hidden><svg class="lid-icon" aria-hidden="true"><use href="#i-refresh"/></svg>Retry</button>
+            </div>
+
+            <dl class="lid-metrics">
+              <div><dt>Model file</dt><dd id="demo-bytes">78.0 kB</dd></div>
+              <div><dt>Labels</dt><dd id="demo-labels">pending</dd></div>
+              <div><dt>Loaded in</dt><dd id="demo-load">pending</dd></div>
+              <div><dt>Inference</dt><dd id="demo-time">pending</dd></div>
+            </dl>
+
+            <div class="lid-results-wrap">
+              <h3 class="lid-results-title" id="demo-results-title">Detected language</h3>
+              <ol class="lid-results" id="demo-results" aria-labelledby="demo-results-title" aria-live="polite" aria-busy="true"></ol>
+              <p class="lid-results-empty" id="demo-empty" hidden>Type or paste some text to identify its language.</p>
+            </div>
+          </div>
+        </div>
+        <div class="lid-demo-note">
+          <svg class="lid-icon" aria-hidden="true"><use href="#i-alert"/></svg>
+          <p>Scores are the models' native scores, not calibrated probabilities (fastText scores can slightly exceed 1). fastText models show their top 3; CLD3 returns only its top language with its own <em>reliable</em> flag. A pack chooses among its own languages and never answers "none of these": Ukrainian text in <code>der_3</code> comes out as Russian.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="packs" class="lid-section" aria-labelledby="packs-title">
+      <header class="mk-section-header" data-align="center">
+        <div class="mk-section-header-copy">
+          <span class="badge lid-eyebrow" data-variant="secondary">Language packs</span>
+          <h2 class="mk-section-header-title" id="packs-title">Pick the smallest pack that covers your languages</h2>
+          <p class="mk-section-header-desc">Each pack is one file, shipped in the npm package as <code>defuss-lid/packs/&lt;name&gt;</code> and published on Hugging Face. What your users download is the pack plus its runtime: fastText needs only a small JavaScript runtime, while CLD3 also loads a WebAssembly core, so its runtime is much larger. Each card adds both up and compares the pack with the same languages on the other runtime.</p>
+        </div>
+      </header>
+
+      <div class="lid-packs">
+        <article class="card lid-pack" data-pack="der_3" data-bytes="78048" aria-labelledby="pack-der_3">
+          <div class="card-header">
+            <div class="lid-pack-head"><h3 class="card-title" id="pack-der_3"><code>der_3</code></h3><span class="badge" data-variant="secondary">fastText</span></div>
+            <p class="card-description">German, English and Russian. The smallest recommended pack, and the most accurate on short text in its set.</p>
+          </div>
+          <div class="card-content">
+            <!-- budget:der_3:start -->
+            <p class="lid-pack-bytes"><span data-bytes-label>78.0</span> kB <span class="lid-pack-bytes-note">pack, 76.5 kB all-in gzipped</span></p>
+            <table class="table lid-budget" aria-label="der_3 compared with CLD3 for the same languages">
+            <thead><tr class="table-row"><th class="table-head" scope="col"><span class="sr-only">Figure</span></th><th class="table-head lid-num" scope="col">der_3</th><th class="table-head lid-num" scope="col">CLD3 alternative</th></tr></thead>
+            <tbody>
+            <tr class="table-row lid-budget-total"><th class="table-head" scope="row">All-in, gzipped</th><td class="table-cell lid-num" data-better>76.5 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">198.4 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">Pack</th><td class="table-cell lid-num" data-better>78.0 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">106.6 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">Runtime</th><td class="table-cell lid-num" data-better>17.3 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">173.6 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">All-in</th><td class="table-cell lid-num" data-better>95.4 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">280.2 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">FLORES sentences</th><td class="table-cell lid-num" data-better>100.00%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">99.97%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">First 20 code points</th><td class="table-cell lid-num" data-better>98.42%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">94.99%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">MASSIVE utterances</th><td class="table-cell lid-num" data-better>98.54%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">97.19%</td></tr>
+            </tbody>
+            </table>
+            <!-- budget:der_3:end -->
+            <p class="lid-pack-meta">3 languages · native PQ + int8</p>
+            <ul class="lid-langs" aria-label="Languages of der_3"><li class="badge" data-variant="outline" data-size="sm">de</li><li class="badge" data-variant="outline" data-size="sm">en</li><li class="badge" data-variant="outline" data-size="sm">ru</li></ul>
+          </div>
+          <div class="card-footer"><code class="lid-import">defuss-lid/packs/der_3</code></div>
+        </article>
+
+        <article class="card lid-pack" data-pack="deferi_6" data-bytes="127488" aria-labelledby="pack-deferi_6">
+          <div class="card-header">
+            <div class="lid-pack-head"><h3 class="card-title" id="pack-deferi_6"><code>deferi_6</code></h3><span class="badge" data-variant="secondary">fastText</span></div>
+            <p class="card-description">Six major European languages: German, English, French, Spanish, Russian and Italian. A larger file than its CLD3 counterpart, yet more accurate, and with the smaller runtime smaller all-in.</p>
+          </div>
+          <div class="card-content">
+            <!-- budget:deferi_6:start -->
+            <p class="lid-pack-bytes"><span data-bytes-label>127.5</span> kB <span class="lid-pack-bytes-note">pack, 119.3 kB all-in gzipped</span></p>
+            <table class="table lid-budget" aria-label="deferi_6 compared with CLD3 for the same languages">
+            <thead><tr class="table-row"><th class="table-head" scope="col"><span class="sr-only">Figure</span></th><th class="table-head lid-num" scope="col">deferi_6</th><th class="table-head lid-num" scope="col">CLD3 alternative</th></tr></thead>
+            <tbody>
+            <tr class="table-row lid-budget-total"><th class="table-head" scope="row">All-in, gzipped</th><td class="table-cell lid-num" data-better>119.3 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">199.0 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">Pack</th><td class="table-cell lid-num">127.5 kB</td><td class="table-cell lid-num" data-better>107.3 kB<span class="sr-only"> (better)</span></td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">Runtime</th><td class="table-cell lid-num" data-better>17.3 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">173.6 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">All-in</th><td class="table-cell lid-num" data-better>144.8 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">280.9 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">FLORES sentences</th><td class="table-cell lid-num" data-better>99.97%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">99.93%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">First 20 code points</th><td class="table-cell lid-num" data-better>93.74%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">89.25%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">MASSIVE utterances</th><td class="table-cell lid-num" data-better>96.92%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">94.84%</td></tr>
+            </tbody>
+            </table>
+            <!-- budget:deferi_6:end -->
+            <p class="lid-pack-meta">6 languages · native PQ + int8</p>
+            <ul class="lid-langs" aria-label="Languages of deferi_6"><li class="badge" data-variant="outline" data-size="sm">de</li><li class="badge" data-variant="outline" data-size="sm">en</li><li class="badge" data-variant="outline" data-size="sm">fr</li><li class="badge" data-variant="outline" data-size="sm">es</li><li class="badge" data-variant="outline" data-size="sm">ru</li><li class="badge" data-variant="outline" data-size="sm">it</li></ul>
+          </div>
+          <div class="card-footer"><code class="lid-import">defuss-lid/packs/deferi_6</code></div>
+        </article>
+
+        <article class="card lid-pack" data-pack="major_20" data-bytes="110428" aria-labelledby="pack-major_20">
+          <div class="card-header">
+            <div class="lid-pack-head"><h3 class="card-title" id="pack-major_20"><code>major_20</code></h3><span class="badge" data-variant="default">CLD3</span></div>
+            <p class="card-description">Twenty widely used languages across Latin, Cyrillic, Arabic, Devanagari, Bengali, Thai, Hangul and CJK scripts. A close call: fastText wins on FLORES and uncompressed size, CLD3 on MASSIVE and gzipped size.</p>
+          </div>
+          <div class="card-content">
+            <!-- budget:major_20:start -->
+            <p class="lid-pack-bytes"><span data-bytes-label>110.4</span> kB <span class="lid-pack-bytes-note">pack, 201.6 kB all-in gzipped</span></p>
+            <table class="table lid-budget" aria-label="major_20 compared with fastText for the same languages">
+            <thead><tr class="table-row"><th class="table-head" scope="col"><span class="sr-only">Figure</span></th><th class="table-head lid-num" scope="col">major_20</th><th class="table-head lid-num" scope="col">fastText alternative</th></tr></thead>
+            <tbody>
+            <tr class="table-row lid-budget-total"><th class="table-head" scope="row">All-in, gzipped</th><td class="table-cell lid-num" data-better>201.6 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">213.7 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">Pack</th><td class="table-cell lid-num" data-better>110.4 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">241.8 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">Runtime</th><td class="table-cell lid-num">173.6 kB</td><td class="table-cell lid-num" data-better>17.3 kB<span class="sr-only"> (better)</span></td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">All-in</th><td class="table-cell lid-num">284.0 kB</td><td class="table-cell lid-num" data-better>259.1 kB<span class="sr-only"> (better)</span></td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">FLORES sentences</th><td class="table-cell lid-num">99.65%</td><td class="table-cell lid-num" data-better>99.70%<span class="sr-only"> (better)</span></td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">First 20 code points</th><td class="table-cell lid-num">91.39%</td><td class="table-cell lid-num" data-better>92.82%<span class="sr-only"> (better)</span></td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">MASSIVE utterances</th><td class="table-cell lid-num" data-better>95.03%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">91.94%</td></tr>
+            </tbody>
+            </table>
+            <!-- budget:major_20:end -->
+            <p class="lid-pack-meta">20 languages · PQ + int8</p>
+            <ul class="lid-langs" aria-label="Languages of major_20"><li class="badge" data-variant="outline" data-size="sm">en</li><li class="badge" data-variant="outline" data-size="sm">de</li><li class="badge" data-variant="outline" data-size="sm">fr</li><li class="badge" data-variant="outline" data-size="sm">it</li><li class="badge" data-variant="outline" data-size="sm">ru</li><li class="badge" data-variant="outline" data-size="sm">id</li><li class="badge" data-variant="outline" data-size="sm">es</li><li class="badge" data-variant="outline" data-size="sm">pt</li><li class="badge" data-variant="outline" data-size="sm">nl</li><li class="badge" data-variant="outline" data-size="sm">ur</li><li class="badge" data-variant="outline" data-size="sm">vi</li><li class="badge" data-variant="outline" data-size="sm">th</li><li class="badge" data-variant="outline" data-size="sm">zh</li><li class="badge" data-variant="outline" data-size="sm">ja</li><li class="badge" data-variant="outline" data-size="sm">pl</li><li class="badge" data-variant="outline" data-size="sm">tr</li><li class="badge" data-variant="outline" data-size="sm">ar</li><li class="badge" data-variant="outline" data-size="sm">ko</li><li class="badge" data-variant="outline" data-size="sm">bn</li><li class="badge" data-variant="outline" data-size="sm">hi</li></ul>
+          </div>
+          <div class="card-footer"><code class="lid-import">defuss-lid/packs/major_20</code></div>
+        </article>
+
+        <article class="card lid-pack" data-pack="full" data-bytes="130404" aria-labelledby="pack-full">
+          <div class="card-header">
+            <div class="lid-pack-head"><h3 class="card-title" id="pack-full"><code>full</code></h3><span class="badge" data-variant="default">CLD3</span></div>
+            <p class="card-description">Every CLD3 output label, including romanized variants such as <code>ru-Latn</code> and <code>ja-Latn</code>: for open-ended input. Smaller and more accurate than the compressed full fastText model, even with its larger runtime.</p>
+          </div>
+          <div class="card-content">
+            <!-- budget:full:start -->
+            <p class="lid-pack-bytes"><span data-bytes-label>130.4</span> kB <span class="lid-pack-bytes-note">pack, 217.4 kB all-in gzipped</span></p>
+            <table class="table lid-budget" aria-label="full compared with fastText for the same languages">
+            <thead><tr class="table-row"><th class="table-head" scope="col"><span class="sr-only">Figure</span></th><th class="table-head lid-num" scope="col">full</th><th class="table-head lid-num" scope="col">fastText alternative</th></tr></thead>
+            <tbody>
+            <tr class="table-row lid-budget-total"><th class="table-head" scope="row">All-in, gzipped</th><td class="table-cell lid-num" data-better>217.4 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">579.1 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">Pack</th><td class="table-cell lid-num" data-better>130.4 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">708.1 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">Runtime</th><td class="table-cell lid-num">173.6 kB</td><td class="table-cell lid-num" data-better>17.3 kB<span class="sr-only"> (better)</span></td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">All-in</th><td class="table-cell lid-num" data-better>304.0 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">725.4 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">FLORES sentences</th><td class="table-cell lid-num" data-better>97.77%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">93.14%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">First 20 code points</th><td class="table-cell lid-num" data-better>78.80%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">73.61%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">MASSIVE utterances</th><td class="table-cell lid-num" data-better>88.60%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">87.17%</td></tr>
+            </tbody>
+            </table>
+            <!-- budget:full:end -->
+            <p class="lid-pack-meta">109 labels · PQ + int8</p>
+            <details class="collapsible lid-langs-all" data-variant="ghost" data-size="sm" data-marker="arrow">
+              <summary class="collapsible-trigger">Show all 109 labels</summary>
+              <div class="collapsible-content">
+                <ul class="lid-langs" aria-label="Labels of full"><li class="badge" data-variant="outline" data-size="sm">af</li><li class="badge" data-variant="outline" data-size="sm">am</li><li class="badge" data-variant="outline" data-size="sm">ar</li><li class="badge" data-variant="outline" data-size="sm">az</li><li class="badge" data-variant="outline" data-size="sm">be</li><li class="badge" data-variant="outline" data-size="sm">bg</li><li class="badge" data-variant="outline" data-size="sm">bg-Latn</li><li class="badge" data-variant="outline" data-size="sm">bn</li><li class="badge" data-variant="outline" data-size="sm">bs</li><li class="badge" data-variant="outline" data-size="sm">ca</li><li class="badge" data-variant="outline" data-size="sm">ceb</li><li class="badge" data-variant="outline" data-size="sm">co</li><li class="badge" data-variant="outline" data-size="sm">cs</li><li class="badge" data-variant="outline" data-size="sm">cy</li><li class="badge" data-variant="outline" data-size="sm">da</li><li class="badge" data-variant="outline" data-size="sm">de</li><li class="badge" data-variant="outline" data-size="sm">el</li><li class="badge" data-variant="outline" data-size="sm">el-Latn</li><li class="badge" data-variant="outline" data-size="sm">en</li><li class="badge" data-variant="outline" data-size="sm">eo</li><li class="badge" data-variant="outline" data-size="sm">es</li><li class="badge" data-variant="outline" data-size="sm">et</li><li class="badge" data-variant="outline" data-size="sm">eu</li><li class="badge" data-variant="outline" data-size="sm">fa</li><li class="badge" data-variant="outline" data-size="sm">fi</li><li class="badge" data-variant="outline" data-size="sm">fr</li><li class="badge" data-variant="outline" data-size="sm">fy</li><li class="badge" data-variant="outline" data-size="sm">ga</li><li class="badge" data-variant="outline" data-size="sm">gd</li><li class="badge" data-variant="outline" data-size="sm">gl</li><li class="badge" data-variant="outline" data-size="sm">gu</li><li class="badge" data-variant="outline" data-size="sm">ha</li><li class="badge" data-variant="outline" data-size="sm">haw</li><li class="badge" data-variant="outline" data-size="sm">he</li><li class="badge" data-variant="outline" data-size="sm">hi</li><li class="badge" data-variant="outline" data-size="sm">hi-Latn</li><li class="badge" data-variant="outline" data-size="sm">hmn</li><li class="badge" data-variant="outline" data-size="sm">hr</li><li class="badge" data-variant="outline" data-size="sm">ht</li><li class="badge" data-variant="outline" data-size="sm">hu</li><li class="badge" data-variant="outline" data-size="sm">hy</li><li class="badge" data-variant="outline" data-size="sm">id</li><li class="badge" data-variant="outline" data-size="sm">ig</li><li class="badge" data-variant="outline" data-size="sm">is</li><li class="badge" data-variant="outline" data-size="sm">it</li><li class="badge" data-variant="outline" data-size="sm">ja</li><li class="badge" data-variant="outline" data-size="sm">ja-Latn</li><li class="badge" data-variant="outline" data-size="sm">jv</li><li class="badge" data-variant="outline" data-size="sm">ka</li><li class="badge" data-variant="outline" data-size="sm">kk</li><li class="badge" data-variant="outline" data-size="sm">km</li><li class="badge" data-variant="outline" data-size="sm">kn</li><li class="badge" data-variant="outline" data-size="sm">ko</li><li class="badge" data-variant="outline" data-size="sm">ku</li><li class="badge" data-variant="outline" data-size="sm">ky</li><li class="badge" data-variant="outline" data-size="sm">la</li><li class="badge" data-variant="outline" data-size="sm">lb</li><li class="badge" data-variant="outline" data-size="sm">lo</li><li class="badge" data-variant="outline" data-size="sm">lt</li><li class="badge" data-variant="outline" data-size="sm">lv</li><li class="badge" data-variant="outline" data-size="sm">mg</li><li class="badge" data-variant="outline" data-size="sm">mi</li><li class="badge" data-variant="outline" data-size="sm">mk</li><li class="badge" data-variant="outline" data-size="sm">ml</li><li class="badge" data-variant="outline" data-size="sm">mn</li><li class="badge" data-variant="outline" data-size="sm">mr</li><li class="badge" data-variant="outline" data-size="sm">ms</li><li class="badge" data-variant="outline" data-size="sm">mt</li><li class="badge" data-variant="outline" data-size="sm">my</li><li class="badge" data-variant="outline" data-size="sm">ne</li><li class="badge" data-variant="outline" data-size="sm">nl</li><li class="badge" data-variant="outline" data-size="sm">no</li><li class="badge" data-variant="outline" data-size="sm">ny</li><li class="badge" data-variant="outline" data-size="sm">pa</li><li class="badge" data-variant="outline" data-size="sm">pl</li><li class="badge" data-variant="outline" data-size="sm">ps</li><li class="badge" data-variant="outline" data-size="sm">pt</li><li class="badge" data-variant="outline" data-size="sm">ro</li><li class="badge" data-variant="outline" data-size="sm">ru</li><li class="badge" data-variant="outline" data-size="sm">ru-Latn</li><li class="badge" data-variant="outline" data-size="sm">sd</li><li class="badge" data-variant="outline" data-size="sm">si</li><li class="badge" data-variant="outline" data-size="sm">sk</li><li class="badge" data-variant="outline" data-size="sm">sl</li><li class="badge" data-variant="outline" data-size="sm">sm</li><li class="badge" data-variant="outline" data-size="sm">sn</li><li class="badge" data-variant="outline" data-size="sm">so</li><li class="badge" data-variant="outline" data-size="sm">sq</li><li class="badge" data-variant="outline" data-size="sm">sr</li><li class="badge" data-variant="outline" data-size="sm">st</li><li class="badge" data-variant="outline" data-size="sm">su</li><li class="badge" data-variant="outline" data-size="sm">sv</li><li class="badge" data-variant="outline" data-size="sm">sw</li><li class="badge" data-variant="outline" data-size="sm">ta</li><li class="badge" data-variant="outline" data-size="sm">te</li><li class="badge" data-variant="outline" data-size="sm">tg</li><li class="badge" data-variant="outline" data-size="sm">th</li><li class="badge" data-variant="outline" data-size="sm">tl</li><li class="badge" data-variant="outline" data-size="sm">tr</li><li class="badge" data-variant="outline" data-size="sm">uk</li><li class="badge" data-variant="outline" data-size="sm">ur</li><li class="badge" data-variant="outline" data-size="sm">uz</li><li class="badge" data-variant="outline" data-size="sm">vi</li><li class="badge" data-variant="outline" data-size="sm">xh</li><li class="badge" data-variant="outline" data-size="sm">yi</li><li class="badge" data-variant="outline" data-size="sm">yo</li><li class="badge" data-variant="outline" data-size="sm">zh</li><li class="badge" data-variant="outline" data-size="sm">zh-Latn</li><li class="badge" data-variant="outline" data-size="sm">zu</li></ul>
+              </div>
+            </details>
+          </div>
+          <div class="card-footer"><code class="lid-import">defuss-lid/packs/full</code></div>
+        </article>
+      </div>
+      <p class="lid-footnote">kB = 1,000 bytes. All-in counts each runtime once: a second pack on the same runtime adds only its own bytes. All-in, gzipped is what a page downloads from a server that compresses JavaScript. Accuracy is top-1 on held-out FLORES devtest sentences, their first 20 code points and MASSIVE test utterances. In each pair the better value is the darker one. The <a href="https://github.com/kyr0/defuss-lid#size">README size table</a> lists every runtime file.</p>
+    </section>
+
+    <section id="how" class="lid-section" aria-labelledby="how-title">
+      <section class="mk-features">
+        <div class="mk-features-head">
+          <span class="badge lid-eyebrow" data-variant="secondary">How it works</span>
+          <h2 class="mk-features-title" id="how-title">Two pretrained classifiers, one small file each</h2>
+          <p class="mk-features-desc">No model was trained from scratch. defuss-lid reuses the released fastText <code>lid.176</code> and Google CLD3 weights, keeps what a set of languages needs, and quantizes the rest.</p>
+        </div>
+        <div class="mk-features-grid">
+          <article class="mk-feature" aria-labelledby="path-fasttext">
+            <div class="mk-feature-copy">
+              <h3 class="mk-feature-title" id="path-fasttext">fastText path</h3>
+              <p class="mk-feature-desc">Pure JavaScript, no WebAssembly: typed arrays and arithmetic.</p>
+            </div>
+            <ol class="lid-steps">
+              <li><strong>Tokenize</strong><span>Split on ASCII whitespace and append the end-of-sentence token <code>&lt;/s&gt;</code>. No case folding or Unicode normalization, exactly as the released model expects.</span></li>
+              <li><strong>Hash n-grams</strong><span>Character 2- to 4-grams with <code>&lt;</code> <code>&gt;</code> word boundaries go through fastText's signed-byte FNV-1a hash into 2,000,000 buckets; a binary search finds the rows the pack kept.</span></li>
+              <li><strong>Look up PQ embeddings</strong><span>Every word and n-gram row is a product-quantized code; its 16-dimensional vector is rebuilt from shared codebooks, and all vectors are averaged.</span></li>
+              <li><strong>Int8 classifier</strong><span>The average meets int8 classifier rows, each with its own FP32 scale.</span></li>
+              <li><strong>Hierarchical softmax</strong><span>A binary tree of sigmoid decisions turns those into a score per language; a pack keeps only the decisions on the paths to its languages.</span></li>
+            </ol>
+          </article>
+          <div class="mk-feature-sep" aria-hidden="true"></div>
+          <article class="mk-feature" aria-labelledby="path-cld3">
+            <div class="mk-feature-copy">
+              <h3 class="mk-feature-title" id="path-cld3">CLD3 path</h3>
+              <p class="mk-feature-desc">Google's original network and feature extraction, in WebAssembly.</p>
+            </div>
+            <ol class="lid-steps">
+              <li><strong>Fetch the pack</strong><span>A <code>.cld3q</code> file holds the output columns of its languages, product-quantized embeddings and int8 dense layers.</span></li>
+              <li><strong>Verify the shared core</strong><span><code>cld3-core.bin.gz</code> is the CLD3 WebAssembly with its weights cut out (85.6&nbsp;kB). The runtime checks the SHA-256 of the download and of the unpacked core before using it.</span></li>
+              <li><strong>Reconstruct the weights</strong><span>PQ codes expand, int8 layers are dequantized, and every left-out output column gets a bias of −1e9; the tensors go back into the pinned 744,144-byte WebAssembly layout.</span></li>
+              <li><strong>Native inference</strong><span>CLD3's own feature extraction and network run unchanged and return the top language with a <em>reliable</em> flag.</span></li>
+            </ol>
+          </article>
+        </div>
+
+        <div class="lid-how-block">
+          <h3 class="lid-how-title">Why the packs are small</h3>
+          <div class="mk-features-bento">
+            <article class="mk-bento-tile" data-span="wide"><svg aria-hidden="true" class="lid-icon"><use href="#i-scissors"/></svg><h4>Output subsetting</h4><p>A pack keeps only what its languages need. For fastText these are the hierarchical-softmax decisions on the paths to the chosen labels, so each kept language keeps its original score. For CLD3 they are the chosen softmax columns.</p></article>
+            <article class="mk-bento-tile" data-span="tall" data-tone="primary"><svg aria-hidden="true" class="lid-icon"><use href="#i-grid"/></svg><h4>PQ + int8</h4><p>fastText packs reuse the released 8-group norm product quantizer unchanged and store classifier rows as int8. CLD3 packs product-quantize the three large embedding tables (4 groups × 256 centroids) and store dense layers as int8 with one scale per output neuron.</p></article>
+            <article class="mk-bento-tile"><svg aria-hidden="true" class="lid-icon"><use href="#i-filter"/></svg><h4>Feature pruning</h4><p>fastText subsets keep only the word and n-gram rows seen in 100 FLORES dev sentences per language. Accuracy is measured on separate FLORES devtest and MASSIVE test data; the pruning API rejects test and devtest records.</p></article>
+            <article class="mk-bento-tile"><svg aria-hidden="true" class="lid-icon"><use href="#i-layers"/></svg><h4>Runtime once</h4><p>Pack sizes exclude the runtime. Every CLD3 pack shares one core, so a second CLD3 pack costs only its own bytes.</p></article>
+          </div>
+        </div>
+
+        <div class="lid-how-block">
+          <h3 class="lid-how-title">Honest limits</h3>
+          <div class="mk-feature-cards" data-variant="boxed">
+            <div class="mk-feature-card">
+              <h4 class="mk-feature-card-title"><svg aria-hidden="true" class="lid-icon"><use href="#i-ruler"/></svg>Size is not RAM</h4>
+              <p class="mk-feature-card-desc">CLD3 packs compress storage and transfer only. They rebuild the original WebAssembly with its dense kernels, so inference memory does not shrink.</p>
+            </div>
+            <div class="mk-feature-card">
+              <h4 class="mk-feature-card-title"><svg aria-hidden="true" class="lid-icon"><use href="#i-filter"/></svg>Pruning costs coverage</h4>
+              <p class="mk-feature-card-desc">Chinese is the largest observed failure: the pruned 20-language fastText pack falls from 88.70%/85.24% to 60.49%/44.92% on MASSIVE zh-CN/zh-TW. The recommended <code>major_20</code> is CLD3, which keeps its shared feature tables.</p>
+            </div>
+            <div class="mk-feature-card">
+              <h4 class="mk-feature-card-title"><svg aria-hidden="true" class="lid-icon"><use href="#i-text"/></svg>Short text is harder</h4>
+              <p class="mk-feature-card-desc"><code>der_3</code> gets 100.00% of FLORES sentences right but 98.42% of their first 20 code points; for <code>full</code> the drop is 97.77% to 78.80%.</p>
+            </div>
+            <div class="mk-feature-card">
+              <h4 class="mk-feature-card-title"><svg aria-hidden="true" class="lid-icon"><use href="#i-gauge"/></svg>Scores are not probabilities</h4>
+              <p class="mk-feature-card-desc">An allowlisted pack picks among its languages and does not reject others. To abstain, set a <code>threshold</code> you have measured on your own data.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <section id="accuracy" class="lid-section" aria-labelledby="accuracy-title">
+      <header class="mk-section-header" data-align="center">
+        <div class="mk-section-header-copy">
+          <span class="badge lid-eyebrow" data-variant="secondary">Measured</span>
+          <h2 class="mk-section-header-title" id="accuracy-title">Held-out top-1 accuracy, pack by pack</h2>
+          <p class="mk-section-header-desc">From the v0.3 report, measured on 2026-11-02: FLORES devtest sentences, their first 20 code points, and MASSIVE test utterances. Each set is its own closed-set task, so numbers are comparable within a set, not across sets. kB = 1,000 bytes.</p>
+        </div>
+      </header>
+
+      <p class="lid-table-note"><span id="accuracy-caption">The four shipped packs, v0.3. All-in adds the runtime the pack needs.</span> <span class="lid-scroll-hint">Scroll the table sideways for all columns.</span></p>
+      <div class="card lid-table-card">
+        <div class="table-container lid-table-scroll" tabindex="0" role="region" aria-labelledby="accuracy-caption">
+          <table class="table" id="accuracy-table" aria-labelledby="accuracy-caption">
+            <thead>
+              <tr class="table-row">
+                <th class="table-head" scope="col">Pack</th>
+                <th class="table-head lid-num" scope="col">Languages</th>
+                <th class="table-head" scope="col">Method</th>
+                <th class="table-head lid-num" scope="col">Pack kB</th>
+                <th class="table-head lid-num" scope="col">All-in kB</th>
+                <th class="table-head lid-num" scope="col">FLORES sentences %</th>
+                <th class="table-head lid-num" scope="col">FLORES first 20 code points %</th>
+                <th class="table-head lid-num" scope="col">MASSIVE utterances %</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- accuracy:start -->
+              <tr class="table-row" data-pack="der_3"><th class="table-head" scope="row"><code>der_3</code></th><td class="table-cell lid-num" data-cell>3</td><td class="table-cell" data-cell>fastText native PQ + int8</td><td class="table-cell lid-num" data-cell>78.0</td><td class="table-cell lid-num" data-cell>95.4</td><td class="table-cell lid-num" data-cell>100.00</td><td class="table-cell lid-num" data-cell>98.42</td><td class="table-cell lid-num" data-cell>98.54</td></tr>
+              <tr class="table-row" data-pack="deferi_6"><th class="table-head" scope="row"><code>deferi_6</code></th><td class="table-cell lid-num" data-cell>6</td><td class="table-cell" data-cell>fastText native PQ + int8</td><td class="table-cell lid-num" data-cell>127.5</td><td class="table-cell lid-num" data-cell>144.8</td><td class="table-cell lid-num" data-cell>99.97</td><td class="table-cell lid-num" data-cell>93.74</td><td class="table-cell lid-num" data-cell>96.92</td></tr>
+              <tr class="table-row" data-pack="major_20"><th class="table-head" scope="row"><code>major_20</code></th><td class="table-cell lid-num" data-cell>20</td><td class="table-cell" data-cell>CLD3 PQ + int8</td><td class="table-cell lid-num" data-cell>110.4</td><td class="table-cell lid-num" data-cell>284.0</td><td class="table-cell lid-num" data-cell>99.65</td><td class="table-cell lid-num" data-cell>91.39</td><td class="table-cell lid-num" data-cell>95.03</td></tr>
+              <tr class="table-row" data-pack="full"><th class="table-head" scope="row"><code>full</code></th><td class="table-cell lid-num" data-cell>109</td><td class="table-cell" data-cell>CLD3 PQ + int8</td><td class="table-cell lid-num" data-cell>130.4</td><td class="table-cell lid-num" data-cell>304.0</td><td class="table-cell lid-num" data-cell>97.77</td><td class="table-cell lid-num" data-cell>78.80</td><td class="table-cell lid-num" data-cell>88.60</td></tr>
+              <!-- accuracy:end -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="lid-accuracy-notes">
+        <p><strong>Full</strong> means the full native label inventory, not full benchmark coverage: FLORES evaluates 78 common labels and MASSIVE 51. Small differences, such as 99.97 against 99.93 on FLORES sentences for <code>deferi_6</code> and its CLD3 alternative, are not a robust quality advantage; the report gives paired bootstrap intervals. The report also lists the configurations that are not shipped, among them the unmodified fastText <code>lid.176</code> model: 93.11% (FLORES) and 87.17% (MASSIVE) on the full set.</p>
+        <a class="btn" data-variant="outline" href="https://github.com/kyr0/defuss-lid/blob/main/documentation/results-v0.3.md" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-book"/></svg>Read the full v0.3 report<span class="sr-only"> on GitHub (opens in a new tab)</span></a>
+      </div>
+
+      <div class="lid-coverage-block">
+        <h3 class="lid-how-title" id="coverage-title">Unit test coverage</h3>
+        <!-- coverage:start -->
+        <div class="mk-stats lid-coverage">
+          <div class="mk-stats-rings">
+            <div class="mk-stat"><div class="radial-progress" role="progressbar" data-tone="auto" data-level="high" aria-valuenow="96.28" aria-valuemin="0" aria-valuemax="100" aria-label="Lines coverage" style="--value: 96.28; --size: 6rem">96.3%</div><span class="mk-stat-label">Lines</span></div>
+            <div class="mk-stat"><div class="radial-progress" role="progressbar" data-tone="auto" data-level="high" aria-valuenow="94.32" aria-valuemin="0" aria-valuemax="100" aria-label="Branches coverage" style="--value: 94.32; --size: 6rem">94.3%</div><span class="mk-stat-label">Branches</span></div>
+            <div class="mk-stat"><div class="radial-progress" role="progressbar" data-tone="auto" data-level="high" aria-valuenow="93.75" aria-valuemin="0" aria-valuemax="100" aria-label="Functions coverage" style="--value: 93.75; --size: 6rem">93.8%</div><span class="mk-stat-label">Functions</span></div>
+            <div class="mk-stat"><div class="radial-progress" role="progressbar" data-tone="auto" data-level="high" aria-valuenow="95.13" aria-valuemin="0" aria-valuemax="100" aria-label="Statements coverage" style="--value: 95.13; --size: 6rem">95.1%</div><span class="mk-stat-label">Statements</span></div>
+          </div>
+        </div>
+        <p class="lid-coverage-note"><span data-fact="tests">45</span> unit tests of <code>src/</code> run on Node.js and on Bun; V8 measures the coverage on Node.js, and the build fails below 90&nbsp;% of lines, functions and statements or 80&nbsp;% of branches.</p>
+        <!-- coverage:end -->
+      </div>
+    </section>
+
+    <section id="use" class="lid-section" aria-labelledby="use-title">
+      <header class="mk-section-header" data-align="center">
+        <div class="mk-section-header-copy">
+          <span class="badge lid-eyebrow" data-variant="secondary">Use it</span>
+          <h2 class="mk-section-header-title" id="use-title">Install once, identify anywhere JavaScript runs</h2>
+          <p class="mk-section-header-desc">Every example on this page is executed by the project's end-to-end tests; the comment after each <code>console.log</code> is the exact output.</p>
+        </div>
+      </header>
+
+      <div class="lid-use">
+        <div class="lid-use-step">
+          <h3 class="lid-use-title"><span class="lid-step-num" aria-hidden="true">1</span>Install</h3>
+          <p class="lid-use-desc">The package carries both runtimes and the four recommended packs. No runtime dependencies, no native addons.</p>
+          <figure class="mk-code-block lid-code">
+            <div class="mk-code-block-head">
+              <div class="mk-code-block-tabs" role="radiogroup" aria-label="Package manager">
+                <label><input type="radio" name="lid-pm" value="npm" checked>npm</label><label><input type="radio" name="lid-pm" value="bun">bun</label>
+              </div>
+              <button class="mk-code-block-copy" type="button" aria-label="Copy install command"><svg class="lid-icon" aria-hidden="true"><use href="#i-copy"/></svg></button>
+            </div>
+            <pre data-tab="npm"><code class="language-sh" data-snippet="install">npm install defuss-lid</code></pre>
+            <pre data-tab="bun"><code class="language-sh" data-snippet="install">bun add defuss-lid</code></pre>
+            <span class="mk-code-block-status" role="status"></span>
+          </figure>
+        </div>
+
+        <div class="lid-use-step">
+          <h3 class="lid-use-title"><span class="lid-step-num" aria-hidden="true">2</span>Load a pack and predict</h3>
+          <div class="tabs lid-tabs">
+            <div class="tab-list" role="tablist" aria-label="Runtime" id="use-tabs">
+              <button class="tab-trigger" role="tab" aria-selected="true" aria-controls="use-node" id="tab-node">Node.js</button>
+              <button class="tab-trigger" role="tab" aria-selected="false" aria-controls="use-bun" id="tab-bun" tabindex="-1">Bun</button>
+              <button class="tab-trigger" role="tab" aria-selected="false" aria-controls="use-bundler" id="tab-bundler" tabindex="-1">Bundler</button>
+              <button class="tab-trigger" role="tab" aria-selected="false" aria-controls="use-cdn" id="tab-cdn" tabindex="-1">No build</button>
+            </div>
+            <div class="tab-content" role="tabpanel" id="use-node" aria-labelledby="tab-node" tabindex="0">
+              <p class="lid-use-desc">Node.js 20.6 or newer resolves the <code>node</code> export condition, which reads the pack from the installed package. Run it with <code>node detect.mjs</code>.</p>
+              <figure class="mk-code-block lid-code" data-variant="file">
+                <div class="mk-code-block-head"><span class="mk-code-block-file"><svg class="lid-icon" aria-hidden="true"><use href="#i-file"/></svg>detect.mjs</span><button class="mk-code-block-copy" type="button" aria-label="Copy code"><svg class="lid-icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+                <pre data-numbers><code class="language-js" data-snippet="node">import {load} from 'defuss-lid/packs/der_3';
+
+const lid = await load();
+console.log(lid.predict('Guten Morgen!')[0].language); // de
+
+const top3 = lid.predict('Good morning, everyone!', {k: 3});
+console.log(top3.map(p =&gt; p.language).join(',')); // en,de,ru</code></pre>
+                <span class="mk-code-block-status" role="status"></span>
+              </figure>
+            </div>
+            <div class="tab-content" role="tabpanel" id="use-bun" aria-labelledby="tab-bun" tabindex="0" hidden>
+              <p class="lid-use-desc">Bun uses the same disk loader as Node.js. Run it with <code>bun detect.mjs</code>.</p>
+              <figure class="mk-code-block lid-code" data-variant="file">
+                <div class="mk-code-block-head"><span class="mk-code-block-file"><svg class="lid-icon" aria-hidden="true"><use href="#i-file"/></svg>detect.mjs</span><button class="mk-code-block-copy" type="button" aria-label="Copy code"><svg class="lid-icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+                <pre data-numbers><code class="language-js" data-snippet="bun">import {load} from 'defuss-lid/packs/der_3';
+
+const lid = await load();
+console.log(lid.predict('Guten Morgen!')[0].language); // de
+
+const top3 = lid.predict('Good morning, everyone!', {k: 3});
+console.log(top3.map(p =&gt; p.language).join(',')); // en,de,ru</code></pre>
+                <span class="mk-code-block-status" role="status"></span>
+              </figure>
+            </div>
+            <div class="tab-content" role="tabpanel" id="use-bundler" aria-labelledby="tab-bundler" tabindex="0" hidden>
+              <p class="lid-use-desc">In the browser the same import resolves a fetch-based loader. It requests the pack from the package's <code>models/</code> folder, relative to the module's URL, so your bundler or server has to serve <code>models/</code> (and, for CLD3 packs, <code>runtime/cld3-core.bin.gz</code>) as assets. Serve the <code>.gz</code> file as plain bytes, without <code>Content-Encoding: gzip</code>: the runtime checks its hash and unpacks it itself.</p>
+              <figure class="mk-code-block lid-code" data-variant="file">
+                <div class="mk-code-block-head"><span class="mk-code-block-file"><svg class="lid-icon" aria-hidden="true"><use href="#i-file"/></svg>main.js</span><button class="mk-code-block-copy" type="button" aria-label="Copy code"><svg class="lid-icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+                <pre data-numbers><code class="language-js" data-snippet="browser">import {load} from 'defuss-lid/packs/der_3';
+
+const lid = await load();
+console.log(lid.predict('Guten Morgen!')[0].language); // de</code></pre>
+                <span class="mk-code-block-status" role="status"></span>
+              </figure>
+            </div>
+            <div class="tab-content" role="tabpanel" id="use-cdn" aria-labelledby="tab-cdn" tabindex="0" hidden>
+              <p class="lid-use-desc">No install and no build: import the runtime from jsDelivr and load a model from the pinned Hugging Face revision.</p>
+              <figure class="mk-code-block lid-code" data-variant="file">
+                <div class="mk-code-block-head"><span class="mk-code-block-file"><svg class="lid-icon" aria-hidden="true"><use href="#i-file"/></svg>index.html</span><button class="mk-code-block-copy" type="button" aria-label="Copy code"><svg class="lid-icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+                <pre data-numbers><code class="language-html" data-snippet="browser">&lt;script type="module"&gt;
+import {loadModel} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.3.0/dist/index.js';
+
+const lid = await loadModel('https://huggingface.co/kyr0/defuss-lid-1.0/resolve/24d27e5b42d002d69fded6301607160919151370/der_3.dlid');
+console.log(lid.predict('Guten Morgen!')[0].language); // de
+&lt;/script&gt;</code></pre>
+                <span class="mk-code-block-status" role="status"></span>
+              </figure>
+            </div>
+          </div>
+        </div>
+
+        <div class="lid-use-pair">
+          <div class="lid-use-step">
+            <h3 class="lid-use-title"><span class="lid-step-num" aria-hidden="true">3</span>CLD3 packs</h3>
+            <p class="lid-use-desc">CLD3 packs run in WebAssembly and return only their top language, with CLD3's <em>reliable</em> flag. Call <code>dispose()</code> when you are done.</p>
+            <figure class="mk-code-block lid-code" data-variant="file">
+              <div class="mk-code-block-head"><span class="mk-code-block-file"><svg class="lid-icon" aria-hidden="true"><use href="#i-file"/></svg>cld3.mjs</span><button class="mk-code-block-copy" type="button" aria-label="Copy code"><svg class="lid-icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+              <pre data-numbers><code class="language-js" data-snippet="node bun browser">import {load} from 'defuss-lid/packs/full';
+
+const lid = await load();
+const [top] = lid.predict('Gallia est omnis divisa in partes tres.');
+console.log(top.language); // la
+console.log(top.reliable); // true
+console.log(lid.predict('Guten Morgen!')[0].reliable); // false
+lid.dispose();</code></pre>
+              <span class="mk-code-block-status" role="status"></span>
+            </figure>
+          </div>
+          <div class="lid-use-step">
+            <h3 class="lid-use-title"><span class="lid-step-num" aria-hidden="true">4</span>Restrict the languages</h3>
+            <p class="lid-use-desc">fastText models can rank only the languages your app supports. A restriction still picks one of them, so add a <code>threshold</code> to abstain.</p>
+            <figure class="mk-code-block lid-code" data-variant="file">
+              <div class="mk-code-block-head"><span class="mk-code-block-file"><svg class="lid-icon" aria-hidden="true"><use href="#i-file"/></svg>restrict.mjs</span><button class="mk-code-block-copy" type="button" aria-label="Copy code"><svg class="lid-icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
+              <pre data-numbers><code class="language-js" data-snippet="node bun browser">import {load} from 'defuss-lid/packs/deferi_6';
+
+const lid = await load();
+const allowed = {languages: ['de', 'en', 'fr']};
+console.log(lid.predict('Guten Tag!', allowed)[0].language); // de
+console.log(lid.predict('Buongiorno a tutti!', allowed)[0].language); // de
+console.log(lid.predict('Buongiorno a tutti!', {...allowed, threshold: 0.5}).length); // 0</code></pre>
+              <span class="mk-code-block-status" role="status"></span>
+            </figure>
+          </div>
+        </div>
+
+        <div class="lid-use-step">
+          <h3 class="lid-use-title">API at a glance</h3>
+          <div class="table-container lid-table-scroll lid-api-wrap">
+            <table class="table lid-api" aria-label="API at a glance">
+              <thead><tr class="table-row"><th class="table-head" scope="col">Call</th><th class="table-head" scope="col">Returns</th></tr></thead>
+              <tbody>
+                <tr class="table-row"><td class="table-cell"><code>load(options?)</code><span class="lid-api-from">from <code>defuss-lid/<wbr>packs/<wbr>&lt;name&gt;</code></span></td><td class="table-cell">The pack, loaded: a fastText model or a CLD3 pack</td></tr>
+                <tr class="table-row"><td class="table-cell"><code>loadModel(url)</code><span class="lid-api-from">from <code>defuss-lid</code></span></td><td class="table-cell">A fastText <code>LidModel</code> from any <code>.dlid</code> URL</td></tr>
+                <tr class="table-row"><td class="table-cell"><code>model.predict(text, {k, threshold, languages})</code><span class="lid-api-from">fastText</span></td><td class="table-cell"><code>[{language, score}]</code>, best first; <code>[]</code> for blank text</td></tr>
+                <tr class="table-row"><td class="table-cell"><code>loadCld3Pack(url, {coreURL})</code><span class="lid-api-from">from <code>defuss-lid/<wbr>cld3-pack</code></span></td><td class="table-cell"><code>{predict, dispose, meta}</code> for any <code>.cld3q</code> URL</td></tr>
+                <tr class="table-row"><td class="table-cell"><code>pack.predict(text, {threshold})</code><span class="lid-api-from">CLD3</span></td><td class="table-cell"><code>[{language, score, reliable}]</code>, top-1 only</td></tr>
+                <tr class="table-row"><td class="table-cell"><code>PACKS</code><span class="lid-api-from">from <code>defuss-lid/<wbr>packs</code></span></td><td class="table-cell">Names, languages, bytes and SHA-256 of the four packs</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="lid-section">
+      <section class="mk-cta" data-variant="dark" aria-labelledby="cta-title">
+        <div class="mk-cta-inner">
+          <div class="mk-cta-copy">
+            <h2 class="mk-cta-title" id="cta-title">The models are on Hugging Face</h2>
+            <p class="mk-cta-desc">Download the packs directly, or pin the exact revision this page uses: <code>24d27e5</code>. The npm package ships byte-identical copies.</p>
+          </div>
+          <div class="mk-cta-actions">
+            <a class="btn" data-variant="outline" data-size="lg" href="https://huggingface.co/kyr0/defuss-lid-1.0" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-box"/></svg>Browse the models<span class="sr-only"> on Hugging Face (opens in a new tab)</span></a>
+            <a class="btn" data-size="lg" href="https://github.com/kyr0/defuss-lid" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-github"/></svg>Source on GitHub<span class="sr-only"> (opens in a new tab)</span></a>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  </main>
+
+  <footer class="mk-footer">
+    <div class="mk-footer-inner">
+      <nav class="mk-footer-nav lid-footer-nav" aria-label="Footer">
+        <div class="mk-footer-col">
+          <h3 class="mk-footer-heading">Project</h3>
+          <ul class="mk-footer-list">
+            <li><a href="https://github.com/kyr0/defuss-lid" target="_blank" rel="noopener">Source on GitHub<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://www.npmjs.com/package/defuss-lid" target="_blank" rel="noopener">npm package<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://github.com/kyr0/defuss-lid/tree/main/documentation" target="_blank" rel="noopener">Documentation<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://github.com/kyr0/defuss-lid/blob/main/documentation/results-v0.3.md" target="_blank" rel="noopener">v0.3 results report<span class="sr-only"> (opens in a new tab)</span></a></li>
+          </ul>
+        </div>
+        <div class="mk-footer-col">
+          <h3 class="mk-footer-heading">Models</h3>
+          <ul class="mk-footer-list">
+            <li><a href="https://huggingface.co/kyr0/defuss-lid-1.0" target="_blank" rel="noopener">kyr0/defuss-lid-1.0<span class="sr-only"> on Hugging Face (opens in a new tab)</span></a></li>
+            <li><a href="https://huggingface.co/kyr0/defuss-lid-1.0/tree/24d27e5b42d002d69fded6301607160919151370" target="_blank" rel="noopener">Pinned revision <code>24d27e5</code><span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://fasttext.cc/docs/en/language-identification.html" target="_blank" rel="noopener">fastText language identification<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://github.com/google/cld3" target="_blank" rel="noopener">Google CLD3<span class="sr-only"> (opens in a new tab)</span></a></li>
+          </ul>
+        </div>
+        <div class="mk-footer-col">
+          <h3 class="mk-footer-heading">Licenses</h3>
+          <ul class="mk-footer-list">
+            <li><a href="https://github.com/kyr0/defuss-lid/blob/main/LICENSE" target="_blank" rel="noopener">Code: MIT<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://github.com/kyr0/defuss-lid/blob/main/licenses/CC-BY-SA-3.0.txt" target="_blank" rel="noopener">fastText-derived weights: CC BY-SA 3.0<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://github.com/kyr0/defuss-lid/blob/main/licenses/CLD3-Apache-2.0.txt" target="_blank" rel="noopener">CLD3 weights: Apache-2.0<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://github.com/kyr0/defuss-lid/blob/main/NOTICE.md" target="_blank" rel="noopener">Attribution and changes (NOTICE.md)<span class="sr-only"> (opens in a new tab)</span></a></li>
+          </ul>
+        </div>
+        <div class="mk-footer-col">
+          <h3 class="mk-footer-heading">Professional consulting services</h3>
+          <aside class="corner-leaf lid-ad" aria-label="Consulting by Aron Homberg">
+            <div class="lid-ad-head">
+              <div class="aura aura-glow aura-gold lid-ad-portrait" style="--shape-round:1.5rem"><img class="shape-squircle" src="assets/aron-homberg.jpg" width="400" height="400" alt="Portrait of Aron Homberg" loading="lazy"></div>
+              <div>
+                <p class="lid-ad-name">Aron Homberg</p>
+                <p class="lid-ad-role">Freelance expert · independent AI researcher</p>
+              </div>
+            </div>
+            <a class="btn" data-size="sm" href="https://www.linkedin.com/in/aronhomberg/" target="_blank" rel="noopener"><svg class="lid-icon lid-icon-fill" aria-hidden="true"><use href="#i-linkedin"/></svg>Connect on LinkedIn<span class="sr-only"> (opens in a new tab)</span></a>
+          </aside>
+        </div>
+      </nav>
+      <hr class="separator mk-footer-rule">
+      <div class="mk-footer-bottom">
+        <a href="#top" class="mk-footer-brand" aria-label="Back to the top"><svg class="lid-icon" aria-hidden="true"><use href="#i-logo"/></svg><span class="mk-footer-brand-name">defuss-lid</span></a>
+        <div class="mk-footer-meta">
+          <p class="mk-footer-copy">© 2026 <a href="https://www.linkedin.com/in/aronhomberg/" target="_blank" rel="noopener">Aron Homberg (kyr0)<span class="sr-only"> (opens in a new tab)</span></a>. Code MIT. Weights adapted from fastText <code>lid.176</code> (Joulin, Grave, Bojanowski, Mikolov and the fastText team, CC BY-SA 3.0) and Google CLD3 (Apache-2.0). Built with <a href="https://shadcn.defuss.org/" target="_blank" rel="noopener">defuss-shadcn<span class="sr-only"> (opens in a new tab)</span></a>.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- defuss-shadcn runtime: core first, then only the interactive components this page uses (tabs, sheet). -->
+<script type="module" src="https://cdn.jsdelivr.net/npm/defuss-shadcn@0.9.12/dist/components/core.min.js" integrity="sha384-FL82Gd9PgP9vdTjGLZI0zqEYp3uGAbFUPvksIXt8JnwGAC7PGZfVJQSf8wXsfL7r" crossorigin="anonymous"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/defuss-shadcn@0.9.12/dist/components/tabs/tabs.min.js" integrity="sha384-fUvdsNkLD9gr7YeeaGW3WmLfEkJbVfAEWSjdFJS3gfSSyZlaUIRDyY/WjKDcTx4c" crossorigin="anonymous"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/defuss-shadcn@0.9.12/dist/components/sheet/sheet.min.js" integrity="sha384-+iA9lt3MjM2JUgg/YaTYmWWgVmflfoGHeabsEPJfd2VaAUq1VN0qMa+IAI8ITirh" crossorigin="anonymous"></script>
+<script type="module" src="assets/site.js"></script>
+</body>
+</html>

@@ -1,0 +1,119 @@
+{
+  "repository": "kyr0/defuss-lid-1.0",
+  "revision": "24d27e5b42d002d69fded6301607160919151370",
+  "target": "models/v0.3",
+  "files": {
+    "20/cld3-pq-int8.cld3q": {
+      "bytes": 110428,
+      "sha256": "95854544f8bc194e455cbbf36264cd312ea21e92fcf49b23fd530fbb102bff9e"
+    },
+    "20/cld3-raw.cld3q": {
+      "bytes": 290876,
+      "sha256": "fbe22809513e74beae12c8150f666d36acbd78929430de6b554d5e65dba6d610"
+    },
+    "20/fasttext-native-exact.dlid": {
+      "bytes": 705788,
+      "sha256": "098e62018834e049fe1204b901769190ea130b4d5f6df3a10cf20fab40d19397"
+    },
+    "20/fasttext-native-pq-int8.dlid": {
+      "bytes": 241808,
+      "sha256": "5655f06cd3529c87690a6f17da4258a53278ed863277386a530a63c2a3679dd8"
+    },
+    "20/fasttext-pq-int8.dlid": {
+      "bytes": 158192,
+      "sha256": "22fecbd0b9ac8a1b00578c6c31d8abd16a803f18d58b73c868cf8f0adf70d296"
+    },
+    "3/cld3-pq-int8.cld3q": {
+      "bytes": 106612,
+      "sha256": "e592175fdb9ff88b66537333b5aa41a5a0e90cad14abac294b91ad4d77ddf628"
+    },
+    "3/cld3-raw.cld3q": {
+      "bytes": 276520,
+      "sha256": "6edce5c7df24f174f510a45d7d4ffecbe4ec8980486242564415b9f662276acb"
+    },
+    "3/fasttext-native-exact.dlid": {
+      "bytes": 702886,
+      "sha256": "ad470a41f90a36e3eeadecc329cd16489cd257221e840acf0e6f7b835a0d8e8e"
+    },
+    "3/fasttext-native-pq-int8.dlid": {
+      "bytes": 78048,
+      "sha256": "a5f7731d030a0142f1c45532903f6725da7468da69f0e9ea0428c7bbd28f24e2"
+    },
+    "3/fasttext-pq-int8.dlid": {
+      "bytes": 55316,
+      "sha256": "0d388dd7a8be48882adecf4a0ce1d9ad15b240ffcb7a16ca29d5ec52dc2108e3"
+    },
+    "6/cld3-pq-int8.cld3q": {
+      "bytes": 107288,
+      "sha256": "9e7bc95eeae912a298c2557037d227a174ee94a87bab178385049726d526569a"
+    },
+    "6/cld3-raw.cld3q": {
+      "bytes": 279052,
+      "sha256": "a34bbbbb279e77a84cd1563540892f56b1db2a1c59aad08da6a6ab586eae152d"
+    },
+    "6/fasttext-native-exact.dlid": {
+      "bytes": 703315,
+      "sha256": "c487898a982f19a183b14155de43185b5140ed0d2cd8be147495a27654030a13"
+    },
+    "6/fasttext-native-pq-int8.dlid": {
+      "bytes": 127488,
+      "sha256": "b72e2ba0d099495882e781078903ade285092461ae8ef41b2a8b606fac08e2ba"
+    },
+    "6/fasttext-pq-int8.dlid": {
+      "bytes": 86628,
+      "sha256": "dbe54e4c1fdc609bab62b8006b179594f93e61c58fad924463bf11b021881d67"
+    },
+    "NOTICE.md": {
+      "bytes": 3380,
+      "sha256": "3242188e68dce105899215695b47c94303a72144ca5a1ae2b41589505d08eb69"
+    },
+    "README.md": {
+      "bytes": 4706,
+      "sha256": "d4fd52d05c5543f7f187e9b4bac0accf922acb21f4ae09b2331896341dcd282e"
+    },
+    "config.json": {
+      "bytes": 2482,
+      "sha256": "065e4e585a56d2f44cf63eb4d0522df2138776c88f2188721b7af6c81cbd5396"
+    },
+    "deferi_6.dlid": {
+      "bytes": 127488,
+      "sha256": "b72e2ba0d099495882e781078903ade285092461ae8ef41b2a8b606fac08e2ba"
+    },
+    "der_3.dlid": {
+      "bytes": 78048,
+      "sha256": "a5f7731d030a0142f1c45532903f6725da7468da69f0e9ea0428c7bbd28f24e2"
+    },
+    "full.cld3q": {
+      "bytes": 130404,
+      "sha256": "24af762041e06b07cae330b1af36b483c23e8b5d7cb51c80aad7a8d5460d7873"
+    },
+    "full/cld3-pq-int8.cld3q": {
+      "bytes": 130404,
+      "sha256": "24af762041e06b07cae330b1af36b483c23e8b5d7cb51c80aad7a8d5460d7873"
+    },
+    "full/cld3-raw.cld3q": {
+      "bytes": 366028,
+      "sha256": "f0d02e9fa0d644fb8a1a0f0b316fa44e45e908dcccce95bc0afc9b1c1ef5c497"
+    },
+    "full/fasttext-native-exact.dlid": {
+      "bytes": 715612,
+      "sha256": "6c1246377a539710a9816284f23340fb7b7a285af44981765c12ed3f1456e7d1"
+    },
+    "full/fasttext-native-pq-int8.dlid": {
+      "bytes": 708068,
+      "sha256": "0f5d3c7342723683a536e557bb45617459f6f621056577fcab1b2fff2271f0fc"
+    },
+    "full/fasttext-pq-int8.dlid": {
+      "bytes": 457132,
+      "sha256": "1827427b24c78b08b2a420f07a51386118dec33882c4be5d92d7a63e48172df4"
+    },
+    "major_20.cld3q": {
+      "bytes": 110428,
+      "sha256": "95854544f8bc194e455cbbf36264cd312ea21e92fcf49b23fd530fbb102bff9e"
+    },
+    "runtime/cld3-core.bin.gz": {
+      "bytes": 85630,
+      "sha256": "13ffd09a157dd9af10f445235a1040292273f2b14ee7b863c850577d3c9beb50"
+    }
+  }
+}
