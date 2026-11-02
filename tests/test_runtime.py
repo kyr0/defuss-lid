@@ -26,7 +26,7 @@ def test_native_fasttext_parity(exact):
     tests/native-fixtures.json was recorded from fastText by
     scripts/verify_native.py; the tolerances are that script's pass criteria.
     """
-    fixtures = json.loads((ROOT / "tests/native-fixtures.json").read_text())
+    fixtures = json.loads((ROOT / "tests/native-fixtures.json").read_text(encoding="utf-8"))
     for item in fixtures:
         best = exact.predict(item["text"])[0]
         assert best["language"] == item["language"], item["text"]

@@ -18,7 +18,7 @@ EXACT = ROOT / "models/v0.3/full/fasttext-native-exact.dlid"
 
 def write_jsonl(path, rows):
     """Write `rows` as one JSON object per line."""
-    path.write_text("".join(json.dumps(r) + "\n" for r in rows))
+    path.write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
 
 
 def test_hs_subset_preserves_scores_and_restricted_ranking(tmp_path):
@@ -82,7 +82,7 @@ def test_min_count_and_max_features_keep_frequent_rows_and_eos(tmp_path):
     corpus = tmp_path / "calibration.jsonl"
     rows = [{"language": "en", "text": texts[0]}, {"language": "en", "text": texts[1]}]
     rows += [{"language": "de", "text": texts[2]}, {"language": "de", "text": "   "}]
-    corpus.write_text("\n" + "".join(json.dumps(r) + "\n" for r in rows))
+    corpus.write_text("\n" + "".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
     frequency = collections.Counter(i for t in texts for i in set(original.features(t)))
     eos = original.words["</s>"]
     sub, _ = restrict(m, a, ["en", "de"], corpus, min_count=2)
@@ -116,7 +116,7 @@ def test_subset_requires_each_language_in_calibration(tmp_path):
     """A language without calibration text, or limits without a corpus, are errors."""
     m, a = load(EXACT)
     p = tmp_path / "empty.jsonl"
-    p.write_text("")
+    p.write_text("", encoding="utf-8")
     with pytest.raises(ValueError, match="no calibration"):
         restrict(m, a, ["en"], p)
     with pytest.raises(ValueError, match="require a calibration"):
@@ -161,7 +161,7 @@ def test_cld3_quantized_columns_and_subset(tmp_path):
     """CLD3 int8 output columns stay within half a quantization step of the originals."""
     from defuss_lid.cld3_pack import LABELS, build
 
-    base = json.loads((ROOT / "runtime/cld3-core.json").read_text())
+    base = json.loads((ROOT / "runtime/cld3-core.json").read_text(encoding="utf-8"))
     with np.load(ROOT / "inspection/cld3-parameters.npz") as z:
         params = {k: z[k] for k in z.files}
     target = tmp_path / "q.cld3q"

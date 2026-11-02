@@ -23,6 +23,6 @@ out = {
     "pareto_size_quality_latency": frontier(results),
     "caution": "Empirical frontier on this cohort; latency is noisy; not a universal optimum.",
 }
-Path(a.output).write_text(json.dumps(out, indent=2) + "\n")
+Path(a.output).write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
 for r in results:
     print(r["model"], r["model_bytes"], {s: round(m["macro_f1"], 5) for s, m in r["metrics"].items()})

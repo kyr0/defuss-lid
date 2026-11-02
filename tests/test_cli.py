@@ -98,7 +98,9 @@ def test_quantize_head_writes_v2(capsys, tmp_path):
 def test_subset_with_corpus(capsys, tmp_path):
     """subset keeps the requested labels and only corpus-observed rows."""
     corpus = tmp_path / "calibration.jsonl"
-    corpus.write_text('{"language": "de", "text": "Guten Morgen"}\n{"language": "en", "text": "Good morning"}\n')
+    corpus.write_text(
+        '{"language": "de", "text": "Guten Morgen"}\n{"language": "en", "text": "Good morning"}\n', encoding="utf-8"
+    )
     target = tmp_path / "deen.dlid"
     argv = ["subset", EXACT, target, "--languages", "de,en", "--corpus", corpus, "--max-features", "50"]
     report = json.loads(run(capsys, *argv))

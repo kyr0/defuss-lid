@@ -44,5 +44,5 @@ result = {
     "qualified": [r["model"] for r in qualified],
     "validation_results": [{k: r[k] for k in ("model", "model_bytes", "metrics")} for r in rows],
 }
-Path(a.output).write_text(json.dumps(result, indent=2) + "\n")
+Path(a.output).write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
 print(json.dumps({k: v for k, v in result.items() if k != "validation_results"}, indent=2))

@@ -53,7 +53,7 @@ def shared_runtime_files():
 
 def full_slice_predictions(reports, key, dataset, case):
     """Return the full-text prediction rows of one benchmark case."""
-    lines = (reports / key / f"{dataset}-{case}.predictions.jsonl").read_text().splitlines()
+    lines = (reports / key / f"{dataset}-{case}.predictions.jsonl").read_text(encoding="utf-8").splitlines()
     return [r for r in map(json.loads, lines) if r["slice"] == "full"]
 
 
@@ -66,7 +66,7 @@ def main():
     )
     a = p.parse_args()
     reports = Path(a.reports)
-    summary = json.loads((reports / "summary.json").read_text())["results"]
+    summary = json.loads((reports / "summary.json").read_text(encoding="utf-8"))["results"]
     lookup = {(r["set"], r["benchmark"], r["case"]): r for r in summary}
     runtime_files = shared_runtime_files()
     runtime = {kind: sum(Path(f).stat().st_size for f in files) for kind, files in runtime_files.items()}
@@ -80,7 +80,7 @@ def main():
         )
         for kind, files in runtime_files.items()
     }
-    lock = json.loads((reports / "build-lock.json").read_text())
+    lock = json.loads((reports / "build-lock.json").read_text(encoding="utf-8"))
     sizes = []
     for model in lock["models"]:
         raw = Path(model["path"]).read_bytes()
@@ -90,7 +90,7 @@ def main():
         for dataset in ["flores", "massive"]:
             r = lookup[(model["set"], dataset, model["case"])]
             assert r["model_sha256"] == digest
-            cohort = json.loads((reports / f"{dataset}-{model['set']}.manifest.json").read_text())
+            cohort = json.loads((reports / f"{dataset}-{model['set']}.manifest.json").read_text(encoding="utf-8"))
             assert r["dataset_sha256"] == cohort["sha256"] and r["metrics"]["full"]["n"] == cohort["records"]
             assert set(cohort["labels"]) <= set(model["labels"])
         sizes.append(
@@ -113,7 +113,8 @@ def main():
             },
             indent=2,
         )
-        + "\n"
+        + "\n",
+        encoding="utf-8",
     )
     lines = [
         "# v0.3: language packs with PQ + int8",
@@ -219,8 +220,8 @@ def main():
         "| --- | ---: | ---: |",
     ]
     for key in LABELS:
-        f = json.loads((reports / f"flores-{key}.manifest.json").read_text())
-        m = json.loads((reports / f"massive-{key}.manifest.json").read_text())
+        f = json.loads((reports / f"flores-{key}.manifest.json").read_text(encoding="utf-8"))
+        m = json.loads((reports / f"massive-{key}.manifest.json").read_text(encoding="utf-8"))
         lines.append(
             f"| {key} | {f['records']:,} / {len(f['labels'])} "
             f"| {m['records']:,} / {len(m['labels'])} / {len(m['locales'])} |"
@@ -301,7 +302,7 @@ def main():
                     f"| {key} | {dataset} | {NAMES[case]} | {100 * ci['accuracy_delta']:+.2f} "
                     f"| [{100 * ci['ci95'][0]:+.2f}, {100 * ci['ci95'][1]:+.2f}] |"
                 )
-    (reports / "paired-comparisons.json").write_text(json.dumps(comparisons, indent=2) + "\n")
+    (reports / "paired-comparisons.json").write_text(json.dumps(comparisons, indent=2) + "\n", encoding="utf-8")
     lines += [
         "",
         "## Build procedure and evidence",
@@ -346,7 +347,7 @@ def main():
     ]
     out = Path(a.output)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text("\n".join(lines))
+    out.write_text("\n".join(lines), encoding="utf-8")
     print(
         json.dumps(
             {"report": str(out), "models": len(sizes), "comparisons": len(comparisons), "runtime_bytes": runtime}

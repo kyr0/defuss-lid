@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 @pytest.fixture(scope="module")
 def cld3():
     """The pinned runtime metadata and the released CLD3 parameter arrays."""
-    base = json.loads((ROOT / "runtime/cld3-core.json").read_text())
+    base = json.loads((ROOT / "runtime/cld3-core.json").read_text(encoding="utf-8"))
     with np.load(ROOT / "inspection/cld3-parameters.npz") as z:
         params = {k: z[k] for k in z.files}
     return base, params
@@ -82,7 +82,7 @@ def test_invalid_build_settings(tmp_path, cld3, kwargs):
 def test_source_assets_reproduce_the_pinned_runtime(tmp_path):
     """Cutting the weights out of the pinned WASM reproduces the committed core and glue."""
     base, params = source_assets(ROOT / "node_modules/cld3-asm", ROOT / "inspection/cld3-parameters.npz", tmp_path)
-    pinned = json.loads((ROOT / "runtime/cld3-core.json").read_text())
+    pinned = json.loads((ROOT / "runtime/cld3-core.json").read_text(encoding="utf-8"))
     assert base["core_sha256"] == pinned["core_sha256"] and base["ranges"] == pinned["ranges"]
     # Compare the decompressed core: gzip bytes depend on the local zlib build.
     core = gzip.decompress((tmp_path / "cld3-core.bin.gz").read_bytes())

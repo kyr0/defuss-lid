@@ -18,8 +18,8 @@ p.add_argument("second", help="predictions JSONL of model B, same records as A")
 p.add_argument("--output", required=True, help="JSON file for the per-slice intervals")
 p.add_argument("--draws", type=int, default=2000, help="bootstrap draws (default: %(default)s)")
 a = p.parse_args()
-left = [json.loads(x) for x in Path(a.first).read_text().splitlines()]
-right = [json.loads(x) for x in Path(a.second).read_text().splitlines()]
+left = [json.loads(x) for x in Path(a.first).read_text(encoding="utf-8").splitlines()]
+right = [json.loads(x) for x in Path(a.second).read_text(encoding="utf-8").splitlines()]
 slices = sorted({r["slice"] for r in left})
 out = {
     "first": Path(a.first).name,
@@ -32,5 +32,5 @@ out = {
         for s in slices
     },
 }
-Path(a.output).write_text(json.dumps(out, indent=2) + "\n")
+Path(a.output).write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
 print(json.dumps(out))

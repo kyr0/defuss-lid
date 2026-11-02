@@ -48,7 +48,7 @@ report = {
     "excludes feature code and label metadata",
     "license": "Apache-2.0; Copyright 2016 Google Inc.",
 }
-Path(a.output).write_text(json.dumps(report, indent=2) + "\n")
+Path(a.output).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 if a.npz:
     np.savez_compressed(a.npz, **arrays)
 print(json.dumps({"tensor_bytes": report["tensor_bytes"], "arrays": len(arrays)}))

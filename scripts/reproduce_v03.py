@@ -62,7 +62,7 @@ def cohorts(data, reports):
     """
     result = {}
     for dataset, source in [("flores", data / "flores-devtest.jsonl"), ("massive", data / "massive-all-test.jsonl")]:
-        rows = [json.loads(line) for line in source.read_text().splitlines()]
+        rows = [json.loads(line) for line in source.read_text(encoding="utf-8").splitlines()]
         for key, langs in SETS.items():
             selected = rows if langs is None else [r for r in rows if r["language"] in langs]
             if langs is not None and set(langs) != {r["language"] for r in selected}:
@@ -81,7 +81,9 @@ def cohorts(data, reports):
                 "source_sha256": sha(source),
                 "file": path.name,
             }
-            (reports / f"{dataset}-{key}.manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+            (reports / f"{dataset}-{key}.manifest.json").write_text(
+                json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+            )
             result[(dataset, key)] = path
     return result
 
@@ -189,9 +191,9 @@ def main():
             "heldout_tuning": False,
             "cld3_not_in_fasttext": sorted(set(LABELS) - set(nm["labels"])),
         }
-        (reports / "build-lock.json").write_text(json.dumps(lock, indent=2) + "\n")
+        (reports / "build-lock.json").write_text(json.dumps(lock, indent=2) + "\n", encoding="utf-8")
     if active("benchmark"):
-        lock = json.loads((reports / "build-lock.json").read_text())
+        lock = json.loads((reports / "build-lock.json").read_text(encoding="utf-8"))
         for item in lock["models"]:
             if sha(item["path"]) != item["sha256"]:
                 raise ValueError("model changed after build lock")
@@ -230,7 +232,9 @@ def main():
                         {s: round(m["accuracy"] * 100, 4) for s, m in report["metrics"].items()},
                         flush=True,
                     )
-        (reports / "summary.json").write_text(json.dumps({"version": "0.3.0", "results": results}, indent=2) + "\n")
+        (reports / "summary.json").write_text(
+            json.dumps({"version": "0.3.0", "results": results}, indent=2) + "\n", encoding="utf-8"
+        )
 
 
 if __name__ == "__main__":

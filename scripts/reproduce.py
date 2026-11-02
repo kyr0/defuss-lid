@@ -113,7 +113,7 @@ def main():
         "reason": "fixed baselines, 465 KB PQ/OPTIC ablation and 101 KB endpoint; no test-based tuning",
     }
     if not a.dry_run:
-        (out / "test-lock.json").write_text(json.dumps(lock, indent=2) + "\n")
+        (out / "test-lock.json").write_text(json.dumps(lock, indent=2) + "\n", encoding="utf-8")
     for dataset, path, slices in [("flores", flores, "full,20,80"), ("massive", massive, "full")]:
         reports = []
         for kind, model, tag in models:

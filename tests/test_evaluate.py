@@ -37,13 +37,13 @@ def test_coverage_curve_and_locales():
 def test_summarize_writes_metrics_per_slice(tmp_path):
     """summarize adds per-slice metrics to the report file and returns it."""
     report = tmp_path / "model.json"
-    report.write_text(json.dumps({"model": "m", "model_bytes": 10}))
+    report.write_text(json.dumps({"model": "m", "model_bytes": 10}), encoding="utf-8")
     rows = [row(0, "de", "de"), row(1, "en", "de"), row(0, "de", "en", slice_name="prefix-20")]
-    report.with_suffix(".predictions.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows))
+    report.with_suffix(".predictions.jsonl").write_text("".join(json.dumps(r) + "\n" for r in rows), encoding="utf-8")
     summary = summarize(report)
     assert set(summary["metrics"]) == {"full", "prefix-20"}
     assert summary["metrics"]["full"]["accuracy"] == 0.5 and summary["metrics"]["prefix-20"]["n"] == 1
-    assert json.loads(report.read_text()) == summary
+    assert json.loads(report.read_text(encoding="utf-8")) == summary
 
 
 def result(name, size, f1, p95):

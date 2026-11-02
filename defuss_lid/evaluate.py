@@ -82,10 +82,12 @@ def summarize(path):
     per `slice` and stores them under `metrics`. Returns the updated report.
     """
     path = Path(path)
-    summary = json.loads(path.read_text())
-    rows = [json.loads(line) for line in path.with_suffix(".predictions.jsonl").read_text().splitlines()]
+    summary = json.loads(path.read_text(encoding="utf-8"))
+    rows = [
+        json.loads(line) for line in path.with_suffix(".predictions.jsonl").read_text(encoding="utf-8").splitlines()
+    ]
     summary["metrics"] = {s: metrics([r for r in rows if r["slice"] == s]) for s in sorted({r["slice"] for r in rows})}
-    path.write_text(json.dumps(summary, indent=2) + "\n")
+    path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     return summary
 
 

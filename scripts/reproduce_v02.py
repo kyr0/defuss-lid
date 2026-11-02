@@ -91,7 +91,9 @@ def main():
             records = []
             for method in methods:
                 records.append(build(base, params, models / directory / f"{method}.cld3q", method, allow))
-            (models / directory / "build-manifest.json").write_text(json.dumps(records, indent=2) + "\n")
+            (models / directory / "build-manifest.json").write_text(
+                json.dumps(records, indent=2) + "\n", encoding="utf-8"
+            )
         meta, arrays = load("models/v0.3/full/fasttext-native-exact.dlid")
         save(models / "subsets/fasttext-five-exact.dlid", *restrict(meta, arrays, langs))
         save(models / "subsets/fasttext-five-observed.dlid", *restrict(meta, arrays, langs, dev))
@@ -103,7 +105,7 @@ def main():
             run("node", "scripts/benchmark.mjs", "cld3-pack", models / "cld3" / f"{method}.cld3q", dev, target)
         py("select_candidate.py", *reports, "--baseline", "raw.cld3q", "--output", out / "cld3-dev-selection.json")
     if active("final"):
-        selected = json.loads((out / "cld3-dev-selection.json").read_text())["selected"]
+        selected = json.loads((out / "cld3-dev-selection.json").read_text(encoding="utf-8"))["selected"]
         lock = {
             "full_methods": METHODS,
             "subset_languages": langs,
@@ -115,7 +117,7 @@ def main():
             "feature_rule": "observed document frequency >=1; no row budget",
             "full_selection_rule": "minimum pack bytes within 0.5pp macro-F1 loss on every dev slice",
         }
-        (out / "test-lock.json").write_text(json.dumps(lock, indent=2) + "\n")
+        (out / "test-lock.json").write_text(json.dumps(lock, indent=2) + "\n", encoding="utf-8")
         for dataset, path, lengths in [("flores", flores, "full,20,80"), ("massive", massive, "full")]:
             reports = []
             for method in METHODS:
@@ -132,7 +134,7 @@ def main():
                 )
             py("summarize.py", *reports, "--output", out / f"{dataset}-summary.json")
             subset = path.with_name(path.stem + "-five.jsonl")
-            with path.open() as src, subset.open("w") as dst:
+            with path.open(encoding="utf-8") as src, subset.open("w", encoding="utf-8") as dst:
                 for line in src:
                     if json.loads(line)["language"] in langs:
                         dst.write(line)

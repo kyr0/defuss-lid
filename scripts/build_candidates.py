@@ -58,5 +58,5 @@ for cutoff in map(int, a.cutoffs.split(",")):
                 "fit_node_logit_mse": m.get("fit_node_logit_mse"),
             }
             manifest.append(record)
-            (root / "build-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+            (root / "build-manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
             print(json.dumps(record), flush=True)

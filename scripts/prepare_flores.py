@@ -85,7 +85,7 @@ def prepare(root, out, split, limit):
         "granularity": "explicit model label mapping; no label-conditioned prediction filtering",
         "note": "Single-domain translated sentences; not a web, mixed-language, or unsupported-language benchmark.",
     }
-    out.with_suffix(".manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    out.with_suffix(".manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"output": str(out), "records": len(records), "languages": len(MAPPING)}))
 
 

@@ -76,7 +76,7 @@ def prepare(archive, output, split="test", limit=0, locales=None):
         "license": "CC-BY-4.0",
         "note": "Explicit locale selection; zh-CN/zh-TW -> zh; nb-NO -> no. No runtime oracle filtering.",
     }
-    out.with_suffix(".manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    out.with_suffix(".manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(json.dumps({"output": str(out), "records": len(records), "labels": len(labels), "locales": len(seen)}))
 
 

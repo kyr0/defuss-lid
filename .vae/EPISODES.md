@@ -43,3 +43,5 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-02T12:07:52Z s=d9c6d40f FINDING scripts/sizes.mjs:measure learn=verifier: scripts/verify.mjs check=versions fails when the verify job's node-version|bun-version|uv version differs from mise.toml; probe with node-version '26' failed as
 2026-11-02T12:07:52Z s=d9c6d40f FINDING tests/serve.test.ts:9 learn=test: the runtimes job runs this Vitest test on windows-latest, which fails on recurrence
 2026-11-02T12:07:52Z s=d9c6d40f FINDING README.md:174 P (precision) learn=none: one-off wording; the figures themselves are gate-checked
+2026-11-02T12:22:36Z s=d9c6d40f DONE fp=153a33e44ac4 cov=96.3% paths=defuss_lid/cld3_pack.py,defuss_lid/evaluate.py,scripts/build_candidates.py,scripts/build_cld3.py(+17)
+2026-11-02T12:22:36Z s=d9c6d40f FINDING tests/test_runtime.py:29 (+46 sibling calls in defuss_lid/, scripts/, tests/) learn=test: tests/test_text_encoding.py scans every Python file of defuss_lid/, scripts/ and tests/ and fails on a text-mode call without encoding; it failed before the fix

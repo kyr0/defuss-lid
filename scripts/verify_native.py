@@ -56,7 +56,7 @@ reference = fasttext.load_model(a.source)
 model = Model(*read_fasttext(a.source))
 texts = TEXTS.copy()
 if a.dataset:
-    records = [json.loads(x) for x in Path(a.dataset).read_text().splitlines()]
+    records = [json.loads(x) for x in Path(a.dataset).read_text(encoding="utf-8").splitlines()]
     texts += [r["text"] for r in records[:: max(1, len(records) // a.limit)][: a.limit]]
 max_hidden, max_score, mismatches = 0.0, 0.0, []
 fixtures = []
@@ -90,9 +90,9 @@ result = {
     "max_abs_top1_score_error": max_score,
     "pass": len(mismatches) == 0 and max_hidden < 1e-4 and max_score < 3e-5,
 }
-Path(a.output).write_text(json.dumps(result, indent=2) + "\n")
+Path(a.output).write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
 if a.fixtures:
-    Path(a.fixtures).write_text(json.dumps(fixtures, ensure_ascii=False, indent=2) + "\n")
+    Path(a.fixtures).write_text(json.dumps(fixtures, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(json.dumps(result))
 if not result["pass"]:
     raise SystemExit("native parity failed")

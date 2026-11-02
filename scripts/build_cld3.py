@@ -48,4 +48,4 @@ for method in a.methods.split(","):
     )
     records.append(row)
     print(json.dumps(row), flush=True)
-(out / "build-manifest.json").write_text(json.dumps(records, indent=2) + "\n")
+(out / "build-manifest.json").write_text(json.dumps(records, indent=2) + "\n", encoding="utf-8")
