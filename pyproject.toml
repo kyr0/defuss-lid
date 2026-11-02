@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "defuss-lid"
-version = "0.3.0"
+version = "0.4.0"
 description = "Pretrained language identification compression and portable inference"
 requires-python = ">=3.10"
 dependencies = ["numpy>=1.26,<3", "scipy>=1.13,<2"]

@@ -1,3 +1,5 @@
+import { C as CLD3_LAYOUT } from './cld3-layout-D_LgBzys.js';
+import { b as boostWeight, c as checkTop1 } from './boost-Bsc1WEV_.js';
 import { p as parseContainer, t as toBytes } from './container-sM-fBKLB.js';
 
 var Module = (function() {
@@ -1448,8 +1450,6 @@ var Module = (function() {
   });
 })();
 
-const CLD3_LAYOUT = { "source_wasm_sha256": "fbbc082e3b310b7e25749866ab47e4537f653a85c8d0957bb38a90a150e76641", "wasm_bytes": 744144, "core_sha256": "3c07d7e8aa3619a70432fa9d901698b483c494942786eb625eacb6cbe6a3f041", "core_gzip_sha256": "13ffd09a157dd9af10f445235a1040292273f2b14ee7b863c850577d3c9beb50", "core_bytes": 384678, "ranges": [{ "name": "kEmbeddingsQuantScales0", "offset": 365473, "bytes": 2e3, "dtype": "<u2" }, { "name": "kEmbeddingsWeights0", "offset": 367473, "bytes": 16e3, "dtype": "|u1" }, { "name": "kEmbeddingsQuantScales1", "offset": 383473, "bytes": 1e4, "dtype": "<u2" }, { "name": "kEmbeddingsWeights1", "offset": 393473, "bytes": 8e4, "dtype": "|u1" }, { "name": "kEmbeddingsQuantScales2", "offset": 473473, "bytes": 24, "dtype": "<u2" }, { "name": "kEmbeddingsWeights2", "offset": 473505, "bytes": 96, "dtype": "|u1" }, { "name": "kEmbeddingsQuantScales3", "offset": 473601, "bytes": 206, "dtype": "<u2" }, { "name": "kEmbeddingsWeights3", "offset": 473809, "bytes": 824, "dtype": "|u1" }, { "name": "kEmbeddingsQuantScales4", "offset": 474642, "bytes": 1e4, "dtype": "<u2" }, { "name": "kEmbeddingsWeights4", "offset": 484642, "bytes": 8e4, "dtype": "|u1" }, { "name": "kEmbeddingsQuantScales5", "offset": 564642, "bytes": 200, "dtype": "<u2" }, { "name": "kEmbeddingsWeights5", "offset": 564851, "bytes": 1600, "dtype": "|u1" }, { "name": "kHiddenWeights0", "offset": 566451, "bytes": 66560, "dtype": "<f4" }, { "name": "kHiddenBiasWeights0", "offset": 633011, "bytes": 832, "dtype": "<f4" }, { "name": "kSoftmaxWeights0", "offset": 633843, "bytes": 90688, "dtype": "<f4" }, { "name": "kSoftmaxBiasWeights0", "offset": 724531, "bytes": 436, "dtype": "<f4" }], "labels": ["eo", "co", "eu", "ta", "de", "mt", "ps", "te", "su", "uz", "zh-Latn", "ne", "nl", "sw", "sq", "hmn", "ja", "no", "mn", "so", "ko", "kk", "sl", "ig", "mr", "th", "zu", "ml", "hr", "bs", "lo", "sd", "cy", "hy", "uk", "pt", "lv", "he", "cs", "vi", "jv", "be", "km", "mk", "tr", "fy", "am", "zh", "da", "sv", "fi", "ht", "af", "la", "id", "tl", "sm", "ca", "el", "ka", "sr", "it", "sk", "ru", "ru-Latn", "bg", "ny", "fa", "haw", "gl", "et", "ms", "gd", "bg-Latn", "ha", "is", "ur", "mi", "hi", "bn", "hi-Latn", "fr", "yi", "hu", "xh", "my", "tg", "ro", "ar", "lb", "el-Latn", "st", "ceb", "kn", "az", "si", "ky", "mg", "en", "gu", "es", "pl", "ja-Latn", "ga", "lt", "sn", "yo", "pa", "ku"] };
-
 const OUTPUT_COLUMNS = 109;
 const HIDDEN_UNITS = 208;
 const RENAMED = { iw: "he", fil: "tl" };
@@ -1592,11 +1592,12 @@ async function createCld3Pack(input, { core, minBytes = 0, maxBytes = 1e4 } = {}
   let disposed = false;
   return {
     meta,
-    predict(text, { k = 1, threshold = 0, languages } = {}) {
+    predict(text, { k = 1, threshold = 0, languages, boost } = {}) {
       if (disposed) throw new Error("CLD3 provider has been disposed");
       if (typeof text !== "string") throw new TypeError("text must be a string");
       if (k !== 1 || languages !== void 0) throw new RangeError("CLD3 pack supports top-1; use a build-time language allowlist");
       if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) throw new RangeError("threshold must be in [0,1]");
+      const weight = boostWeight(boost);
       for (const char of text) {
         const cp = char.codePointAt(0);
         if (cp >= 55296 && cp <= 57343) throw new TypeError("unpaired Unicode surrogate");
@@ -1611,9 +1612,10 @@ async function createCld3Pack(input, { core, minBytes = 0, maxBytes = 1e4 } = {}
         const score = module.getValue(result + 4, "float"), reliable = Boolean(module.getValue(result + 8, "i8"));
         rangeCount = module.getValue(result + 16, "i32");
         ranges = module.getValue(result + 20, "*");
-        if (language === "und" || !language || score < threshold) return [];
+        if (language === "und" || !language) return [];
         if (!meta.labels.includes(language)) throw new Error("native result escaped model allowlist");
-        return [{ language, score, reliable }];
+        const checked = checkTop1(text, meta.labels, { language, score, reliable }, weight);
+        return checked.score < threshold ? [] : [checked];
       } finally {
         for (let i = 0; i < rangeCount; i++) module._free(module.getValue(ranges + i * 4, "*"));
         if (ranges) module._free(ranges);

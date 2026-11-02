@@ -92,7 +92,7 @@ const MODELS = {
 const ui = {
   text: $('demo-text'), model: $('demo-model'), results: $('demo-results'), empty: $('demo-empty'),
   state: $('demo-state'), status: $('demo-status'), retry: $('demo-retry'), file: $('demo-file'), fileName: $('demo-file-name'),
-  bytes: $('demo-bytes'), labels: $('demo-labels'), load: $('demo-load'), time: $('demo-time'),
+  bytes: $('demo-bytes'), labels: $('demo-labels'), load: $('demo-load'), time: $('demo-time'), boost: $('demo-boost'),
 };
 const number = new Intl.NumberFormat('en');
 const ms = value => (value < 10 ? value.toFixed(2) : number.format(Math.round(value))) + ' ms';
@@ -105,13 +105,15 @@ const languageName = code => {
 let runtime;
 const getRuntime = () => (runtime ??= Promise.all([
   import('./lib/dist/index.js'), import('./lib/dist/cld3-pack.js'), import('./lib/dist/packs/index.js'),
-]).then(([fastText, cld3, packs]) => ({loadModel: fastText.loadModel, loadCld3Pack: cld3.loadCld3Pack, PACKS: packs.PACKS})).catch(error => {
+]).then(([fastText, cld3, packs]) => ({
+  loadModel: fastText.loadModel, loadCld3Pack: cld3.loadCld3Pack, PACKS: packs.PACKS, boostWeight: fastText.BOOST_WEIGHT,
+})).catch(error => {
   runtime = undefined; // a later retry imports again
   throw error;
 }));
 
 const fastTextCache = new Map(); // fastText models are plain typed arrays: safe to keep while switching
-let active = null; // {name, model, cld3}
+let active = null; // {name, model, cld3, boostWeight}
 let generation = 0; // the newest model request wins; older ones are dropped when they finish
 
 const setStatus = (state, text) => {
@@ -134,7 +136,7 @@ async function selectModel(name) {
   ui.labels.textContent = ui.load.textContent = ui.time.textContent = 'pending';
   setStatus('loading', `Loading ${name}…`);
   try {
-    const {loadModel, loadCld3Pack, PACKS} = await getRuntime();
+    const {loadModel, loadCld3Pack, PACKS, boostWeight} = await getRuntime();
     const {bytes} = PACKS[name];
     if (ticket === generation) ui.bytes.textContent = `${(bytes / 1000).toFixed(1)} kB`;
     const started = performance.now();
@@ -150,7 +152,7 @@ async function selectModel(name) {
       return;
     }
     if (active?.cld3) active.model.dispose(); // each CLD3 pack owns a WebAssembly instance
-    active = {name, model, cld3: Boolean(spec.cld3)};
+    active = {name, model, cld3: Boolean(spec.cld3), boostWeight};
     ui.labels.textContent = number.format(model.meta.labels.length);
     ui.load.textContent = ms(loadTime);
     setStatus('ready', 'Ready');
@@ -165,7 +167,7 @@ async function selectModel(name) {
   }
 }
 
-const row = ({language, score, reliable}) => {
+const row = ({language, score, reliable}, max) => {
   const item = document.createElement('li');
   item.className = 'lid-result';
   item.dataset.language = language;
@@ -191,8 +193,8 @@ const row = ({language, score, reliable}) => {
   const bar = document.createElement('progress');
   bar.className = 'progress';
   bar.dataset.size = 'sm';
-  bar.max = 1;
-  bar.value = Math.min(1, score); // fastText scores can exceed 1 by fastText's 1e-5 log epsilon
+  bar.max = max;
+  bar.value = Math.min(max, score); // fastText scores can exceed 1 by fastText's 1e-5 log epsilon
   bar.setAttribute('aria-label', `Score for ${name.textContent}`);
   item.append(label, value, bar);
   return item;
@@ -201,7 +203,8 @@ const row = ({language, score, reliable}) => {
 function predict() {
   if (!active) return;
   const text = ui.text.value;
-  const options = active.cld3 ? {} : {k: 3};
+  const boost = ui.boost.checked;
+  const options = active.cld3 ? {boost} : {k: 3, boost};
   let predictions;
   try {
     // Time a short batch, not one call: one prediction often takes less than the browser's timer resolution.
@@ -218,7 +221,9 @@ function predict() {
     ui.empty.textContent = `This text cannot be classified: ${error.message}`;
     return;
   }
-  ui.results.replaceChildren(...predictions.map(row));
+  // a boosted score is the model score plus up to the boost weight (letters that fit completely)
+  const max = boost ? 1 + active.boostWeight : 1;
+  ui.results.replaceChildren(...predictions.map(prediction => row(prediction, max)));
   ui.empty.hidden = predictions.length > 0;
   ui.empty.textContent = text.trim() ? 'No language passed the threshold.' : 'Type or paste some text to identify its language.';
 }
@@ -230,6 +235,7 @@ ui.text.addEventListener('input', () => {
   timer = setTimeout(predict, 120); // debounce: one prediction per typing pause, not per key
 });
 ui.model.addEventListener('change', () => selectModel(ui.model.value));
+ui.boost.addEventListener('change', predict);
 ui.retry.addEventListener('click', () => selectModel(ui.model.value));
 for (const button of document.querySelectorAll('[data-sample]')) {
   button.addEventListener('click', () => {

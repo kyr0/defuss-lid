@@ -22,15 +22,34 @@
  */
 import createModule from '../runtime/cld3-glue.js';
 import {CLD3_LAYOUT as pinned} from '../runtime/cld3-layout.js';
+import {boostWeight, checkTop1} from './boost.js';
 import {type BinaryInput, type ContainerMeta, parseContainer, toBytes, type TypedArray} from './container.js';
 import type {Prediction} from './index.js';
 
 export type {BinaryInput, ContainerMeta} from './container.js';
 
-/** A CLD3 result: top-1 language, CLD3's probability and its own reliability flag. */
+/** A CLD3 result: top-1 language, CLD3's probability and its reliability flag. */
 export interface Cld3Prediction extends Prediction {
-  /** CLD3's own `is_reliable` flag, computed by the native code from its probability. */
+  /**
+   * CLD3's own `is_reliable` flag (computed by the native code from its probability), cleared when another language
+   * fits the text's letters better (`letterSupport`), and always `false` for an answer the letter boost substituted.
+   */
   reliable: boolean;
+}
+
+/** Options of a CLD3 `predict` call. */
+export interface Cld3PredictOptions {
+  /** CLD3 returns its top language only. */
+  k?: 1;
+  /** Minimum score in [0, 1] (default 0); with `boost`, it applies to the boosted score. */
+  threshold?: number;
+  /**
+   * Letter boost (default off): the top language's score becomes `score + weight × letterSupport`, and a pack language
+   * whose `weight × letterSupport` alone is higher replaces it (with `reliable: false`, since CLD3 never ranked it).
+   * Several such languages with the same support replace it only when its own support is 0, taking the first in label
+   * order. `true` uses `BOOST_WEIGHT`; a number sets the weight.
+   */
+  boost?: boolean | number;
 }
 
 /** Encoding of one stored tensor. */
@@ -82,7 +101,7 @@ export interface Cld3Pack {
    * Top-1 language of `text`, or `[]` for blank text, CLD3's `und` and results below `threshold`. CLD3 has no k-best
    * output and no runtime language filter: use a pack built with the languages you need.
    */
-  predict(text: string, options?: {k?: 1; threshold?: number}): Cld3Prediction[];
+  predict(text: string, options?: Cld3PredictOptions): Cld3Prediction[];
   /** Free the native model. Idempotent; `predict` throws afterwards. */
   dispose(): void;
 }
@@ -276,11 +295,12 @@ export async function createCld3Pack(input: BinaryInput,
   let disposed = false;
   return {
     meta,
-    predict(text, {k = 1, threshold = 0, languages}: {k?: number; threshold?: number; languages?: unknown} = {}) {
+    predict(text, {k = 1, threshold = 0, languages, boost}: {k?: number; threshold?: number; languages?: unknown; boost?: boolean | number} = {}) {
       if (disposed) throw new Error('CLD3 provider has been disposed');
       if (typeof text !== 'string') throw new TypeError('text must be a string');
       if (k !== 1 || languages !== undefined) throw new RangeError('CLD3 pack supports top-1; use a build-time language allowlist');
       if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) throw new RangeError('threshold must be in [0,1]');
+      const weight = boostWeight(boost);
       // Same reason as the fastText runtime: allocateUTF8 would encode a lone surrogate as U+FFFD.
       for (const char of text) {
         const cp = char.codePointAt(0)!;
@@ -299,9 +319,10 @@ export async function createCld3Pack(input: BinaryInput,
         const score = module.getValue(result + 4, 'float'), reliable = Boolean(module.getValue(result + 8, 'i8'));
         rangeCount = module.getValue(result + 16, 'i32');
         ranges = module.getValue(result + 20, '*');
-        if (language === 'und' || !language || score < threshold) return [];
+        if (language === 'und' || !language) return [];
         if (!meta.labels.includes(language)) throw new Error('native result escaped model allowlist');
-        return [{language, score, reliable}];
+        const checked = checkTop1(text, meta.labels, {language, score, reliable}, weight);
+        return checked.score < threshold ? [] : [checked];
       } finally {
         for (let i = 0; i < rangeCount; i++) module._free(module.getValue(ranges + i * 4, '*'));
         if (ranges) module._free(ranges);

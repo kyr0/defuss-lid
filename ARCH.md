@@ -10,6 +10,8 @@ defuss-lid turns released language-identification models (fastText `lid.176`, Go
 
 **One container format for both families.** A DLID file is a JSON header plus aligned little-endian arrays (`src/container.ts`, `defuss_lid/format.py`): it maps onto typed arrays and NumPy without a parser dependency and carries provenance (source hashes, changes, license) next to the weights.
 
+**Letters as evidence next to the model, not as a filter.** Both models read letters statistically, so a short text can come out in a language whose alphabet it does not use (`major_20` called "гроза" Portuguese, with CLD3's `reliable` flag set). `src/boost.ts` measures the share of a text's letters each language's alphabet explains, from one line of letters per language (`src/charsets.ts`). The opt-in `boost` adds that share to the model scores; a hard script filter instead would throw away the right answer whenever a text mixes scripts (Latin names in Japanese or Russian text), while the additive boost lets the model still decide. VERIFIED: weight 1 improved or kept the accuracy of all four packs on every benchmark slice; against the 0.3.0 build, the `reliable` check raised the precision of `major_20`'s reliable answers on FLORES-200 dev 8-code-point prefixes from 79.8% to 85.4% and cut reliable answers for languages outside the pack from 72.6% to 37.0% (2026-11-02; accuracy: `scripts/boost_eval.mjs` and README).
+
 **Models from a pinned release, not from git.** `models.lock.json` names the Hugging Face revision and the SHA-256 of all 28 files; `scripts/fetch-models.mjs` downloads and verifies them, and `prepack` refuses to pack without them. A changed upstream file therefore fails setup instead of silently changing results.
 
 ## How it works
@@ -27,6 +29,7 @@ flowchart LR
 ```
 
 - `src/container.ts` parses and validates DLID containers; `src/index.ts` is the fastText runtime (`LidModel`, `loadModel`); `src/cld3-pack.ts` rebuilds and instantiates CLD3 from a pack and `runtime/cld3-core.bin.gz` after checking both hashes; `src/cld3.ts` wraps the unmodified npm build as the reference provider.
+- `src/boost.ts` is the letter evidence (`letterSupport`, the `boost` option of both runtimes, the `reliable` check of CLD3) over the table in `src/charsets.ts`; the runtimes share it as one chunk, so the table ships once.
 - `src/packs/index.ts` is the registry (names, languages, bytes, SHA-256). Each pack has a `.node.ts` loader (reads from disk, `node` export condition) and a `.browser.ts` loader (fetch). Both use a literal `new URL('../../models/…', import.meta.url)`, so bundlers emit the asset and the path stays valid from `dist/packs/`.
 - The Python package mirrors the fastText runtime for reference inference and implements export, subsetting, feature pruning, PQ fitting and int8 heads; `scripts/reproduce_v03.py` rebuilds the release and its benchmarks.
 - Contracts other folders rely on: the DLID layout and header fields, the pinned CLD3 layout in `runtime/cld3-layout.js`, the registry agreeing with `models.lock.json`, and `docs/assets/lib/` being a byte copy of the built runtime. `scripts/verify.mjs` checks the last two and every other duplicated fact.

@@ -12,6 +12,7 @@ import {join} from 'node:path';
 import {CDN_BASE, HF_BASE, expect, repoRoot, test} from './fixtures.mjs';
 
 const report = readFileSync(join(repoRoot, 'documentation/results-v0.3.md'), 'utf8');
+const readme = readFileSync(join(repoRoot, 'README.md'), 'utf8');
 const lock = JSON.parse(readFileSync(join(repoRoot, 'models.lock.json'), 'utf8'));
 const html = readFileSync(join(repoRoot, 'docs/index.html'), 'utf8');
 
@@ -25,6 +26,7 @@ const SNIPPETS = [
   ['browser', '<script type="module">'],
   ['node bun browser', "import {load} from 'defuss-lid/packs/full';"],
   ['node bun browser', "import {load} from 'defuss-lid/packs/deferi_6';"],
+  ['node bun browser', "import {load} from 'defuss-lid/packs/major_20';"],
 ];
 const TAGS = new Set(['node', 'bun', 'browser', 'install', 'run', 'cli']);
 
@@ -72,6 +74,8 @@ test('hero: claim, runtimes and calls to action', async ({page}) => {
   await page.getByRole('link', {name: 'Try the live demo'}).click();
   await expect(page.locator('#demo-title')).toBeInViewport();
   await expect(page.getByRole('link', {name: 'Use it in your app'})).toHaveAttribute('href', '#use');
+  await page.locator('.mk-hero-pill').click();
+  await expect(page.locator('#boost')).toBeInViewport();
 });
 
 test('theme toggle switches dark mode and persists across reloads', async ({page}) => {
@@ -115,6 +119,32 @@ test('demo: every model loads and identifies its sample', async ({page}) => {
     await expect(page.locator('#demo-time')).toHaveText(/ms$/);
     await expect(rows.first().locator('progress')).toHaveAttribute('aria-label', /^Score for /);
   }
+});
+
+test('demo: the letter boost re-ranks by alphabet and clears reliable', async ({page}) => {
+  await open(page);
+  const rows = page.locator('#demo-results li');
+  const boost = page.locator('#demo-boost');
+  await expect(boost).not.toBeChecked();
+  await page.selectOption('#demo-model', 'major_20');
+  await expect(page.locator('#demo-status')).toHaveText('Ready');
+  await page.locator('[data-sample="ru-word"]').click();
+  // CLD3 alone calls the Russian word Portuguese; the letter check takes away its reliable flag
+  await expect(rows.first()).toHaveAttribute('data-language', 'pt');
+  await expect(rows.first().locator('.badge')).toHaveText('not reliable');
+  await boost.check();
+  await expect(rows.first()).toHaveAttribute('data-language', 'ru');
+  await expect(rows.first().locator('.badge')).toHaveText('not reliable');
+  await expect(rows.first().locator('.lid-result-score')).toHaveText('1.000');
+  await expect(rows.first().locator('progress')).toHaveAttribute('max', '2');
+  // fastText: boosted scores add up to 1 for letters that fit completely
+  await page.selectOption('#demo-model', 'der_3');
+  await expect(page.locator('#demo-status')).toHaveText('Ready');
+  await expect(rows.first()).toHaveAttribute('data-language', 'ru');
+  expect(Number(await rows.first().locator('.lid-result-score').textContent())).toBeGreaterThan(1);
+  await boost.uncheck();
+  expect(Number(await rows.first().locator('.lid-result-score').textContent())).toBeLessThan(1);
+  await expect(rows.first().locator('progress')).toHaveAttribute('max', '1');
 });
 
 test('demo: typing predicts (debounced), blank text abstains, samples fill the textarea', async ({page}) => {
@@ -167,15 +197,28 @@ test('packs: cards match the runtime registry and models.lock.json', async ({pag
   await expect(all.locator('.lid-langs')).toBeVisible();
 });
 
-test('how it works: both paths, size reasons and limits', async ({page}) => {
+test('how it works: both paths, letter evidence, size reasons and limits', async ({page}) => {
   await open(page);
+  await expect(page.locator('#how .lid-how-title')).toHaveText(['Letters as evidence', 'Why the packs are small', 'Honest limits']);
+  // the letter-boost figures are the README's measured table, row by row
+  const boostRows = page.locator('#boost-table tbody tr');
+  await expect(boostRows).toHaveCount(4);
+  for (const row of await boostRows.all()) {
+    const cells = await row.locator('td').allTextContents();
+    expect(readme, 'README letter-boost row').toContain(`| \`${await row.getAttribute('data-pack')}\` | ${cells.join(' | ')} |`);
+  }
   await expect(page.locator('#how .mk-feature-title')).toHaveText(['fastText path', 'CLD3 path']);
   await expect(page.locator('#how .mk-feature').first().locator('.lid-steps li')).toHaveCount(5);
   await expect(page.locator('#how .mk-feature').nth(1).locator('.lid-steps li')).toHaveCount(4);
   await expect(page.locator('#how .mk-bento-tile h4')).toHaveText(['Output subsetting', 'PQ + int8', 'Feature pruning', 'Runtime once']);
   await expect(page.locator('#how .mk-feature-card-title')).toHaveText(['Size is not RAM', 'Pruning costs coverage', 'Short text is harder', 'Scores are not probabilities']);
-  // every percentage quoted in this section comes from the report
-  for (const value of await page.locator('#how').evaluate(node => node.textContent.match(/\d+\.\d+%/g))) {
+  // every other percentage quoted in this section comes from the report
+  const quoted = await page.locator('#how').evaluate(node => {
+    const copy = node.cloneNode(true);
+    copy.querySelector('#boost').remove();
+    return copy.textContent.match(/\d+\.\d+%/g);
+  });
+  for (const value of quoted) {
     expect(report, value).toContain(value.slice(0, -1));
   }
 });
@@ -247,7 +290,7 @@ test('use it: snippet contract, tabs and copy buttons', async ({page, browserNam
   await install.locator('.mk-code-block-copy').click();
   await expect(install.locator('.mk-code-block-status')).toHaveText(/Copied|Copy failed/);
   if (browserName === 'chromium') expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('bun add defuss-lid');
-  await expect(page.locator('#use table.lid-api tbody tr')).toHaveCount(6);
+  await expect(page.locator('#use table.lid-api tbody tr')).toHaveCount(7);
 });
 
 test('footer: licenses, links and author', async ({page}) => {

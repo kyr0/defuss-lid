@@ -16,8 +16,8 @@
  * VERIFIED: the hand-written figures of the old README (12,482 and 164,801 bytes) no longer matched the built
  * files on 2026-11-02.
  */
-import {readdir, readFile, writeFile} from 'node:fs/promises';
-import {join} from 'node:path';
+import {readFile, writeFile} from 'node:fs/promises';
+import {join, posix} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {gzipSync} from 'fflate';
 
@@ -45,12 +45,30 @@ async function measure(files) {
   return {raw, gzip};
 }
 
+/**
+ * A built entry and every chunk it imports, transitively: what loading the entry downloads. Why follow the imports
+ * instead of matching chunk names: pkgroll splits shared code into hashed chunks whose number and names change with
+ * the source, and a missed chunk under-reports the runtime.
+ */
+export async function closure(entry) {
+  const files = [], queue = [entry];
+  while (queue.length) {
+    const file = queue.shift();
+    if (files.includes(file)) continue;
+    files.push(file);
+    const code = await readFile(join(root, file), 'utf8');
+    for (const [, spec] of code.matchAll(/\b(?:from|import)\s*['"](\.{1,2}\/[^'"]+\.js)['"]/g)) {
+      queue.push(posix.join(posix.dirname(file), spec));
+    }
+  }
+  return files;
+}
+
 /** What an application loads besides the pack: the fastText JS, or the CLD3 JS plus its WebAssembly core. */
 export async function runtimes() {
-  const chunks = (await readdir(join(root, 'dist'))).filter(name => /^container-.+\.js$/.test(name)).map(name => `dist/${name}`);
   return {
-    fasttext: {label: 'fastText', ...(await measure(['dist/index.js', ...chunks]))},
-    cld3: {label: 'CLD3', ...(await measure(['dist/cld3-pack.js', ...chunks, 'runtime/cld3-core.bin.gz']))},
+    fasttext: {label: 'fastText', ...(await measure(await closure('dist/index.js')))},
+    cld3: {label: 'CLD3', ...(await measure([...(await closure('dist/cld3-pack.js')), 'runtime/cld3-core.bin.gz']))},
   };
 }
 
@@ -107,10 +125,9 @@ export async function packFigures() {
 /** README size table: what each file costs. */
 export async function sizeTable() {
   const {PACKS} = await import(new URL('../dist/packs/index.js', import.meta.url).href);
-  const chunks = (await readdir(join(root, 'dist'))).filter(name => /^container-.+\.js$/.test(name)).map(name => `dist/${name}`);
   const rows = [
-    [['dist/index.js', ...chunks], '`dist/index.js` (+ shared chunk)', 'fastText runtime: `LidModel`, `loadModel`'],
-    [['dist/cld3-pack.js', ...chunks], '`dist/cld3-pack.js` (+ shared chunk)', 'CLD3 pack runtime with the Emscripten glue'],
+    [await closure('dist/index.js'), '`dist/index.js` (+ shared chunks)', 'fastText runtime: `LidModel`, `loadModel`, `letterSupport`'],
+    [await closure('dist/cld3-pack.js'), '`dist/cld3-pack.js` (+ shared chunks)', 'CLD3 pack runtime with the Emscripten glue'],
     [['runtime/cld3-core.bin.gz'], '`runtime/cld3-core.bin.gz`', 'shared CLD3 WebAssembly core, stored gzip-compressed; once per app'],
     ...Object.values(PACKS).map(pack => [[pack.asset], `\`${pack.name}\``, `${pack.languages.length} languages, ${pack.kind === 'fasttext' ? 'fastText' : 'CLD3'} pack`]),
   ];

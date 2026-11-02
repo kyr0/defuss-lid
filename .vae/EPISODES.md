@@ -45,3 +45,14 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-02T12:07:52Z s=d9c6d40f FINDING README.md:174 P (precision) learn=none: one-off wording; the figures themselves are gate-checked
 2026-11-02T12:22:36Z s=d9c6d40f DONE fp=153a33e44ac4 cov=96.3% paths=defuss_lid/cld3_pack.py,defuss_lid/evaluate.py,scripts/build_candidates.py,scripts/build_cld3.py(+17)
 2026-11-02T12:22:36Z s=d9c6d40f FINDING tests/test_runtime.py:29 (+46 sibling calls in defuss_lid/, scripts/, tests/) learn=test: tests/test_text_encoding.py scans every Python file of defuss_lid/, scripts/ and tests/ and fails on a text-mode call without encoding; it failed before the fix
+2026-11-02T20:32:07Z s=b132b503 FAIL prose
+2026-11-02T20:38:41Z s=b132b503 DONE fp=c106ca1b520e cov=96.9% paths=ARCH.md,README.md,docs/index.html,e2e/site.spec.mjs(+8)
+2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:share learn=test: tests/boost.test.ts 'a language written in Latin or another script counts the better-fitting one, not both' (Компания Apple: ru 8/13, sr 7/13)
+2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:checkTop1 learn=test: tests/boost.test.ts 'tied candidates replace the answer only when it explains none of the letters' (Arabic text vs ja; eBayやCraigsl stays ja)
+2026-11-02T20:38:41Z s=b132b503 FINDING scripts/sizes.mjs:runtimes learn=none: closure() derives the file list from the imports, so there is no chunk-name list left to drift; scripts/verify.mjs 'generated' recomputes the blocks with it
+2026-11-02T20:38:41Z s=b132b503 FINDING src/charsets.ts:qu,lb,li,ig,mg,cy,da,sv,fi,sa,mai,bh,ja,zh learn=none: the check needs the FLORES-200 corpora, which are downloaded outside git, so it cannot run in the gate
+2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:module doc learn=none: documentation wording
+2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:checkTop1 doc + ARCH.md:13 learn=none: one-off measurements recorded with their date
+2026-11-02T20:38:41Z s=b132b503 FINDING src/cld3-pack.ts:Cld3Prediction.reliable learn=none: documentation wording
+2026-11-02T20:38:41Z s=b132b503 FINDING README.md:23,142-145 learn=verifier: vae.py prose check in the gate
+2026-11-02T20:48:03Z s=b132b503 DONE fp=688c268538f7 cov=96.9% paths=ARCH.md,README.md,defuss_lid/__init__.py,docs/assets/site.css(+14)

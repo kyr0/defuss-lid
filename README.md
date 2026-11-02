@@ -20,6 +20,7 @@ Features:
 - 🌐 Node.js, Bun and browsers: each pack has a disk loader (`node` export condition) and a fetch loader; bundlers emit the model file through `new URL(…, import.meta.url)`
 - 🔒 Verified bytes: the CLD3 core is SHA-256-checked before it is instantiated, every model file is validated before inference, and the released files are pinned by hash in `models.lock.json`
 - 🎯 Language allowlists: build-time packs for both runtimes, and `predict(text, {languages})` for any fastText model
+- Letter boost: `predict(text, {boost: true})` adds how well the text's letters fit each language's alphabet to the model score, so "гроза" comes out Russian instead of Portuguese; CLD3's `reliable` flag is cleared when the letters fit another language better
 - 🛠️ Python tools to build your own packs from the released weights: subset, prune, quantize, inspect
 - 🧪 Vitest on Node.js and Bun, Playwright in Chromium, Firefox and WebKit, and every code example on this page executed by the e2e suite
 
@@ -29,7 +30,7 @@ The runtime from jsDelivr, a pack from the [Hugging Face release](https://huggin
 
 ```html browser
 <script type="module">
-  import {loadModel} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.3.0/dist/index.js';
+  import {loadModel} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.4.0/dist/index.js';
 
   // der_3: German, English and Russian in 78 kB, pinned to a release revision
   const lid = await loadModel('https://huggingface.co/kyr0/defuss-lid-1.0/resolve/24d27e5b42d002d69fded6301607160919151370/der_3.dlid');
@@ -41,7 +42,7 @@ CLD3 packs work the same way and cover more scripts. They own WebAssembly memory
 
 ```html browser
 <script type="module">
-  import {loadCld3Pack} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.3.0/dist/cld3-pack.js';
+  import {loadCld3Pack} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.4.0/dist/cld3-pack.js';
 
   // 20 languages in 110 kB; the shared CLD3 core loads from next to cld3-pack.js
   const lid = await loadCld3Pack('https://huggingface.co/kyr0/defuss-lid-1.0/resolve/24d27e5b42d002d69fded6301607160919151370/major_20.cld3q');
@@ -90,7 +91,7 @@ console.log(lid.predict('Bonjour tout le monde.')[0].language); // fr
 console.log(lid.predict('Buenos días, ¿cómo estás?')[0].language); // es
 ```
 
-CLD3 packs return CLD3's reliability flag too and must be disposed:
+CLD3 packs return a reliability flag too, CLD3's own, cleared when the text's letters fit another language better. They must be disposed:
 
 ```js node bun browser
 import {load} from 'defuss-lid/packs/major_20';
@@ -115,7 +116,37 @@ console.log(second.language); // it
 console.log(lid.predict('la casa', {languages: ['it', 'fr']})[0].language); // it
 ```
 
-`predict(text, {k = 1, threshold = 0, languages})` returns `[{language, score}]`, best first, and `[]` for text without words (only spaces, tabs, line breaks or NUL, the separators fastText reads), for text without known features, and when nothing reaches `threshold`. The registry `defuss-lid/packs` lists every pack without loading one:
+`predict(text, {k = 1, threshold = 0, languages, boost})` returns `[{language, score}]`, best first, and `[]` for text without words (only spaces, tabs, line breaks or NUL, the separators fastText reads), for text without known features, and when nothing reaches `threshold`.
+
+### Letter boost
+
+A short text can come out in a language whose alphabet it does not use: `major_20` calls the Russian word "гроза" Portuguese. The writing system is hard evidence, and `letterSupport(text, languages)` measures it: the share of the text's letters that each language's alphabet explains. Cyrillic letters fit every Cyrillic-script language alike, ß fits German, ї fits Ukrainian and not Russian. With `boost: true`, `predict` adds this support to every language's model score before ranking:
+
+```js node bun browser
+import {load} from 'defuss-lid/packs/major_20';
+import {letterSupport} from 'defuss-lid';
+
+const lid = await load();
+console.log(lid.predict('гроза')[0].language, lid.predict('гроза')[0].reliable); // pt false
+console.log(lid.predict('гроза', {boost: true})[0].language); // ru
+console.log(letterSupport('гроза', ['ru', 'uk', 'pt']).get('uk')); // 1
+lid.dispose();
+```
+
+`boost: true` uses weight 1 (`BOOST_WEIGHT`); a number sets another weight. Boosted scores can exceed 1, and `threshold` applies to them. CLD3 returns only its top language, so there the other languages have no model score: a language replaces the answer when its weighted support alone beats the answer's boosted score (when several tie, only if the answer's own support is 0), and the result is never `reliable`. The `reliable` flag is checked with or without the boost.
+
+`node scripts/boost_eval.mjs` measured the boost on the benchmark cohorts on 2026-11-02; the figures without the boost are those of the [pack table](#packs):
+
+| Pack | FLORES sentences | with boost | FLORES first 20 code points | with boost | MASSIVE utterances | with boost |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `der_3` | 100.00% | 100.00% | 98.42% | 98.55% | 98.54% | 98.63% |
+| `deferi_6` | 99.97% | 99.97% | 93.74% | 93.84% | 96.92% | 96.97% |
+| `major_20` | 99.65% | 99.87% | 91.39% | 91.82% | 95.03% | 95.48% |
+| `full` | 97.77% | 98.06% | 78.80% | 78.98% | 88.60% | 88.88% |
+
+The letter table (`src/charsets.ts`) has one line per language, `<code> <letters>`: the letters outside ASCII a–z for Latin-script languages (`de äöüß`), and for other scripts the letters only some of its languages use plus one letter per script (`ru аийцщъыьэюяё`, `el α`). It covers the 176 fastText and the 109 CLD3 labels; the [size table](#size) counts it in the runtime. The Python runtime has no boost.
+
+The registry `defuss-lid/packs` lists every pack without loading one:
 
 ```js node bun browser
 import {PACKS} from 'defuss-lid/packs';
@@ -126,7 +157,7 @@ console.log(PACKS.major_20.kind); // cld3-pack
 
 | Import | Contents |
 | --- | --- |
-| `defuss-lid` (or `defuss-lid/fasttext`) | fastText runtime: `LidModel`, `loadModel`, `parseContainer` |
+| `defuss-lid` (or `defuss-lid/fasttext`) | fastText runtime: `LidModel`, `loadModel`, `parseContainer`; `letterSupport`, `BOOST_WEIGHT` |
 | `defuss-lid/cld3-pack` | CLD3 pack runtime: `loadCld3Pack`, `createCld3Pack`, `reconstructCld3` |
 | `defuss-lid/cld3` | the unmodified npm `cld3-asm@4.0.0` as an optional reference provider (install it yourself) |
 | `defuss-lid/packs` | registry: names, languages, bytes and SHA-256 of the four packs |
@@ -138,19 +169,19 @@ console.log(PACKS.major_20.kind); // cld3-pack
 <!-- packs:start -->
 | Pack | Languages | Method | Pack | All-in | All-in gzipped | FLORES sentences | FLORES first 20 code points | MASSIVE utterances |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `der_3` | de, en, ru | fastText native PQ + int8 | 78.0 kB | 95.4 kB | 77.5 kB | 100.00% | 98.42% | 98.54% |
-| `deferi_6` | de, en, es, fr, it, ru | fastText native PQ + int8 | 127.5 kB | 144.8 kB | 119.8 kB | 99.97% | 93.74% | 96.92% |
-| `major_20` | ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pl, pt, ru, th, tr, ur, vi, zh | CLD3 PQ + int8 | 110.4 kB | 284.0 kB | 202.6 kB | 99.65% | 91.39% | 95.03% |
-| `full` | 109 CLD3 labels | CLD3 PQ + int8 | 130.4 kB | 304.0 kB | 218.7 kB | 97.77% | 78.80% | 88.60% |
+| `der_3` | de, en, ru | fastText native PQ + int8 | 78.0 kB | 110.5 kB | 82.3 kB | 100.00% | 98.42% | 98.54% |
+| `deferi_6` | de, en, es, fr, it, ru | fastText native PQ + int8 | 127.5 kB | 160.0 kB | 124.6 kB | 99.97% | 93.74% | 96.92% |
+| `major_20` | ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pl, pt, ru, th, tr, ur, vi, zh | CLD3 PQ + int8 | 110.4 kB | 299.0 kB | 207.4 kB | 99.65% | 91.39% | 95.03% |
+| `full` | 109 CLD3 labels | CLD3 PQ + int8 | 130.4 kB | 319.0 kB | 223.5 kB | 97.77% | 78.80% | 88.60% |
 
 The same languages on the other runtime, measured in the same run but not shipped as packs:
 
 | Languages of | Method | Pack | All-in | All-in gzipped | FLORES sentences | FLORES first 20 code points | MASSIVE utterances |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `der_3` | CLD3 PQ + int8 | 106.6 kB | 280.2 kB | 199.4 kB | 99.97% | 94.99% | 97.19% |
-| `deferi_6` | CLD3 PQ + int8 | 107.3 kB | 280.9 kB | 199.9 kB | 99.93% | 89.25% | 94.84% |
-| `major_20` | fastText native PQ + int8 | 241.8 kB | 259.1 kB | 214.1 kB | 99.70% | 92.82% | 91.94% |
-| `full` | fastText native PQ + int8 | 708.1 kB | 725.4 kB | 581.1 kB | 93.14% | 73.61% | 87.17% |
+| `der_3` | CLD3 PQ + int8 | 106.6 kB | 295.2 kB | 204.2 kB | 99.97% | 94.99% | 97.19% |
+| `deferi_6` | CLD3 PQ + int8 | 107.3 kB | 295.8 kB | 204.7 kB | 99.93% | 89.25% | 94.84% |
+| `major_20` | fastText native PQ + int8 | 241.8 kB | 274.3 kB | 218.9 kB | 99.70% | 92.82% | 91.94% |
+| `full` | fastText native PQ + int8 | 708.1 kB | 740.5 kB | 585.9 kB | 93.14% | 73.61% | 87.17% |
 <!-- packs:end -->
 
 kB = 1,000 bytes. **All-in** is what an application downloads to identify text: the pack plus its runtime, the fastText JavaScript or the CLD3 JavaScript and its WebAssembly core (see [Size](#size)); exact byte counts are in `defuss-lid/packs` (`PACKS.der_3.bytes`). Top-1 accuracy on held-out FLORES-200 devtest sentences (and their first 20 code points) and MASSIVE 1.1 test utterances, measured on 2026-11-02; the full pack is evaluated on the 78 FLORES and 51 MASSIVE labels it shares with the benchmarks, not on all 109. For 3 languages the fastText pack is smaller and more accurate than CLD3; for 6 languages it is a larger file than its CLD3 counterpart, yet more accurate and, with the much smaller runtime, smaller all-in. For 20 languages the measurements are mixed: CLD3 is more accurate on MASSIVE utterances and smaller all-in once gzipped, fastText more accurate on FLORES sentences and their prefixes and smaller all-in uncompressed. For all languages CLD3 is both smaller and more accurate. [results-v0.3.md](documentation/results-v0.3.md) has the remaining candidates, exact-subset baselines, paired bootstrap intervals and per-language failures (pruning hurts Chinese most).
@@ -162,8 +193,8 @@ Every file of the release, including the per-set candidates and baselines, is on
 <!-- sizes:start -->
 | File | Size | Gzipped | What |
 | --- | ---: | ---: | --- |
-| `dist/index.js` (+ shared chunk) | 17.3 kB | 6.3 kB | fastText runtime: `LidModel`, `loadModel` |
-| `dist/cld3-pack.js` (+ shared chunk) | 87.9 kB | 17.8 kB | CLD3 pack runtime with the Emscripten glue |
+| `dist/index.js` (+ shared chunks) | 32.5 kB | 11.1 kB | fastText runtime: `LidModel`, `loadModel`, `letterSupport` |
+| `dist/cld3-pack.js` (+ shared chunks) | 102.9 kB | 22.6 kB | CLD3 pack runtime with the Emscripten glue |
 | `runtime/cld3-core.bin.gz` | 85.6 kB | 85.6 kB | shared CLD3 WebAssembly core, stored gzip-compressed; once per app |
 | `der_3` | 78.0 kB | 71.2 kB | 3 languages, fastText pack |
 | `deferi_6` | 127.5 kB | 113.4 kB | 6 languages, fastText pack |
@@ -196,7 +227,7 @@ uv run python scripts/build_cld3.py --languages de,en,fr,es,ru --methods raw,int
 
 ## Website
 
-[`docs/index.html`](docs/index.html) is the project site, built on [defuss-shadcn](https://shadcn.defuss.org/) and served as-is by GitHub Pages: a live demo of all packs, a card per pack with its all-in size next to the other runtime, how both runtimes work, the accuracy table and the setups above. Its size and accuracy figures, like the tables in this README, are generated by `scripts/sizes.mjs`. It loads the runtime from `docs/assets/lib/` (a copy of `dist/`, refreshed by `bun run docs` and checked by `scripts/verify.mjs`) and the models from the pinned Hugging Face revision. Run it locally with `bun run serve` and open <http://127.0.0.1:8080/docs/>.
+[`docs/index.html`](docs/index.html) is the project site, built on [defuss-shadcn](https://shadcn.defuss.org/) and served as-is by GitHub Pages: a live demo of all packs with a letter-boost switch, a card per pack with its all-in size next to the other runtime, how both runtimes and the letter boost work, the accuracy table and the setups above. Its size and accuracy figures, like the tables in this README, are generated by `scripts/sizes.mjs`. It loads the runtime from `docs/assets/lib/` (a copy of `dist/`, refreshed by `bun run docs` and checked by `scripts/verify.mjs`) and the models from the pinned Hugging Face revision. Run it locally with `bun run serve` and open <http://127.0.0.1:8080/docs/>.
 
 ## Two things to know
 
@@ -223,7 +254,7 @@ If you use defuss-lid in research or want to reference it, cite it as:
   affiliation  = {Independent Researcher},
   title        = {defuss-lid: compressed pretrained language identification packs with a portable runtime},
   year         = {2026},
-  version      = {0.3.0},
+  version      = {0.4.0},
   howpublished = {\url{https://github.com/kyr0/defuss-lid}},
   note         = {Models: \url{https://huggingface.co/kyr0/defuss-lid-1.0}}
 }

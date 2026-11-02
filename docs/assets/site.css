@@ -135,6 +135,7 @@
   @container mk-features (min-width: 34rem) { .lid-section .mk-features-bento { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @container mk-features (min-width: 56rem) { .lid-section .mk-features-bento { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   .lid-how-title { margin: 0; font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; }
+  .lid-how-desc { margin: 0; max-width: 72ch; color: var(--muted-foreground); text-wrap: pretty; }
   /* tile headings are h4 (under the block's h3); same look as the block's own h3 rule */
   .mk-bento-tile h4 { margin: .5rem 0 0; font-size: 1.125rem; font-weight: 600; line-height: 1.3; }
   .mk-bento-tile .lid-icon { width: 1.5rem; height: 1.5rem; }
@@ -151,6 +152,11 @@
   .lid-table-scroll:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
   #accuracy-table { min-width: 44rem; }
   #accuracy-table :is(th, td) { padding-inline: 1rem; }
+  /* letter boost: the same layout as the accuracy table, inside the how-it-works block */
+  #boost-table { min-width: 44rem; }
+  #boost-table :is(th, td) { padding-inline: 1rem; }
+  #boost-table tbody th { background: none; font-weight: 400; }
+  #boost .lid-table-note { margin: 0; }
   #accuracy-table th { vertical-align: bottom; }
   .lid-num { text-align: end; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
   th.lid-num { font-family: var(--font-sans); white-space: normal; }

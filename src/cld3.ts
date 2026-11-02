@@ -10,11 +10,19 @@
  *
  * @module
  */
-import type {Cld3Prediction} from './cld3-pack.js';
+import {CLD3_LAYOUT} from '../runtime/cld3-layout.js';
+import {boostWeight, checkTop1} from './boost.js';
+import type {Cld3Prediction, Cld3PredictOptions} from './cld3-pack.js';
+
+/** CLD3's 109 output labels, as the packs name them. */
+const LABELS: readonly string[] = CLD3_LAYOUT.labels;
 
 export interface Cld3Provider {
-  /** Top-1 language, same contract as a CLD3 pack: `[]` for blank text, `und` or a result below `threshold`. */
-  predict(text: string, options?: {k?: 1; threshold?: number}): Cld3Prediction[];
+  /**
+   * Top-1 language, same contract as a CLD3 pack (including `boost` and the letter check of `reliable`): `[]` for
+   * blank text, `und` or a result below `threshold`.
+   */
+  predict(text: string, options?: Cld3PredictOptions): Cld3Prediction[];
   /** Free the native model. Idempotent. */
   dispose(): void;
 }
@@ -39,18 +47,20 @@ export async function loadCld3({minBytes = 0, maxBytes = 10000}: {minBytes?: num
   const model = factory.create(minBytes, maxBytes);
   let disposed = false;
   return {
-    predict(text, {k = 1, threshold = 0, languages}: {k?: number; threshold?: number; languages?: unknown} = {}) {
+    predict(text, {k = 1, threshold = 0, languages, boost}: {k?: number; threshold?: number; languages?: unknown; boost?: boolean | number} = {}) {
       if (disposed) throw new Error('CLD3 provider has been disposed');
       if (typeof text !== 'string') throw new TypeError('text must be a string');
       if (k !== 1) throw new RangeError('CLD3 exposes only the top language for a single span');
       if (languages !== undefined) throw new RangeError('use a build-time CLD3 pack allowlist');
       if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) throw new RangeError('threshold must be in [0,1]');
+      const weight = boostWeight(boost);
       if (!text.trim()) return [];
       const result = model.findLanguage(text);
-      if (!result.language || result.language === 'und' || result.probability < threshold) return [];
+      if (!result.language || result.language === 'und') return [];
       // CLD3 still emits the old ISO 639 codes iw and fil; the packs use he and tl.
       const language = ({iw: 'he', fil: 'tl'} as Record<string, string>)[result.language] ?? result.language;
-      return [{language, score: result.probability, reliable: result.is_reliable}];
+      const checked = checkTop1(text, LABELS, {language, score: result.probability, reliable: result.is_reliable}, weight);
+      return checked.score < threshold ? [] : [checked];
     },
     dispose() {
       if (!disposed) {

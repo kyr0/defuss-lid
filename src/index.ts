@@ -17,8 +17,10 @@
  *
  * @module
  */
+import {boostWeight, letterSupport} from './boost.js';
 import {type BinaryInput, type ContainerMeta, parseContainer, type TypedArray} from './container.js';
 
+export {BOOST_WEIGHT, letterSupport} from './boost.js';
 export type {BinaryInput, Container, ContainerMeta, SectionDescriptor, TypedArray} from './container.js';
 export {parseContainer} from './container.js';
 
@@ -43,6 +45,12 @@ export interface PredictOptions {
    * model (Python `subset` command) for a smaller file.
    */
   languages?: readonly string[];
+  /**
+   * Letter boost (default off): add `weight × letterSupport` to every label's score before ranking, so languages
+   * whose writing system the text's letters fit rise above those whose alphabet it does not use. `true` uses
+   * {@link BOOST_WEIGHT}; a number sets the weight. Boosted scores can exceed 1 and `threshold` applies to them.
+   */
+  boost?: boolean | number;
 }
 
 export interface LoadOptions {
@@ -407,12 +415,14 @@ export class LidModel {
    *
    * Returns `[]` for text without words (only spaces, tabs, line breaks or NUL: fastText's separators), for text
    * without any known feature, and when no label reaches the threshold. The threshold applies to the class probability before fastText's +1e-5 score offset, exactly like
-   * fastText's `predict` (`Loss::findKBest`, `HierarchicalSoftmaxLoss::dfs`). Ties keep label order.
+   * fastText's `predict` (`Loss::findKBest`, `HierarchicalSoftmaxLoss::dfs`). Ties keep label order. With `boost`,
+   * ranking and threshold use the boosted score instead.
    *
-   * @throws RangeError for k < 1, a threshold outside [0, 1], or `languages` that are empty, duplicated or unknown.
+   * @throws RangeError for k < 1, a threshold outside [0, 1], `languages` that are empty, duplicated or unknown, or
+   * a negative or non-finite boost.
    * @throws TypeError for a non-string or a lone UTF-16 surrogate.
    */
-  predict(text: string, {k = 1, threshold = 0, languages}: PredictOptions = {}): Prediction[] {
+  predict(text: string, {k = 1, threshold = 0, languages, boost}: PredictOptions = {}): Prediction[] {
     if (!Number.isInteger(k) || k < 1 || !Number.isFinite(threshold) || threshold < 0 || threshold > 1) {
       throw new RangeError('k >= 1 and threshold in [0,1] required');
     }
@@ -420,11 +430,16 @@ export class LidModel {
       new Set(languages).size !== languages.length || languages.some(x => !this.meta.labels.includes(x)))) {
       throw new RangeError('languages must be nonempty, unique, known labels');
     }
+    const weight = boostWeight(boost);
     const allowed = languages === undefined ? null : new Set(languages);
     const ids = this.features(text);
     if (!WORD_CHARACTER.test(text) || !ids.length) return [];
     const scores = this.scoresFromHidden(this.hidden(ids));
     const labels = this.meta.labels;
+    if (weight) {
+      const support = letterSupport(text, labels);
+      for (let i = 0; i < scores.length; i++) scores[i]! += weight * support.get(labels[i]!)!;
+    }
     // Every loss reports probability + 1e-5, so "probability ≥ threshold" is "score ≥ threshold + 1e-5".
     const cutoff = threshold + EPSILON;
     if (k === 1) {
