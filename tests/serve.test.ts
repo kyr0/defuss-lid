@@ -1,10 +1,12 @@
+import {fileURLToPath} from 'node:url';
 import {describe, expect, test} from 'vitest';
 // @ts-expect-error scripts/ are plain ES modules without declarations
 import {createStaticServer} from '../scripts/serve.mjs';
 
 describe('static server (website and e2e)', () => {
   test('serves files with module and gzip-as-bytes types, rejects traversal and malformed escapes', async () => {
-    const server = createStaticServer(new URL('../', import.meta.url).pathname);
+    // fileURLToPath, not URL#pathname: on Windows the pathname is /D:/a/…, which resolves to the wrong directory.
+    const server = createStaticServer(fileURLToPath(new URL('../', import.meta.url)));
     await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
     const base = `http://127.0.0.1:${(server.address() as {port: number}).port}`;
     try {

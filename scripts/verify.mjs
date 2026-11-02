@@ -68,6 +68,16 @@ await check('versions', async () => {
   if (python !== pkg.version) failures.push(`pyproject.toml version ${python} ≠ package.json ${pkg.version}`);
   if (module !== pkg.version) failures.push(`defuss_lid/__init__.py __version__ ${module} ≠ ${pkg.version}`);
   if (!readme.includes(`version      = {${pkg.version}}`)) failures.push(`README citation version ≠ ${pkg.version}`);
+  // CI's verify job must run the toolchain of mise.toml, the one the gate passed with locally: `make coverage` in that
+  // job checks the site's coverage figures, so CI must measure with the same Node.js. Why exact versions and not a
+  // major: VERIFIED: setup-node '26' installed 26.13.0 while mise.toml pinned 26.11.1 (CI run 41424485299), and that
+  // release's zlib changed the gzip figures, then computed with node:zlib, by up to 3.3 kB (2026-11-02).
+  const tools = Object.fromEntries([...(await read('mise.toml')).matchAll(/^(\w+) = "([^"]+)"$/gm)].map(([, tool, version]) => [tool, version]));
+  const job = /\n {2}verify:\n([\s\S]*?)(?=\n {2}[\w-]+:\n|$)/.exec(await read('.github/workflows/verify.yml'))?.[1] ?? '';
+  for (const [tool, key] of [['node', 'node-version'], ['bun', 'bun-version'], ['uv', 'version']]) {
+    const pinned = new RegExp(`\\s${key}: '([^']+)'`).exec(job)?.[1];
+    if (pinned !== tools[tool]) failures.push(`.github/workflows/verify.yml job verify: ${key} ${pinned} ≠ mise.toml ${tool} ${tools[tool]}`);
+  }
   for (const [page, text] of Object.entries(pages)) {
     for (const [, version] of text.matchAll(/defuss-lid@(\d+\.\d+\.\d+)/g)) {
       if (version !== pkg.version) failures.push(`${page}: defuss-lid@${version} ≠ package.json ${pkg.version}`);
@@ -184,7 +194,12 @@ await check('generated', async () => {
   for (const [file, blocks] of Object.entries(await generatedBlocks())) {
     const text = file === 'README.md' ? readme : site;
     for (const [name, content] of Object.entries(blocks)) {
-      if (replaceBlock(text, name, content, file) !== text) failures.push(`${file}: block "${name}" is stale (run node scripts/sizes.mjs --write)`);
+      const updated = replaceBlock(text, name, content, file);
+      if (updated === text) continue;
+      // The first differing line, so a CI failure shows which figure moved without a local rerun.
+      const [page, fresh] = [text.split('\n'), updated.split('\n')];
+      const at = page.findIndex((line, i) => line !== fresh[i]);
+      failures.push(`${file}: block "${name}" is stale (run node scripts/sizes.mjs --write); line ${at + 1}: ${page[at]?.trim()} → ${fresh[at]?.trim()}`);
     }
   }
   return failures;

@@ -22,10 +22,14 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: '1.4.3'
+      # The exact mise.toml versions (scripts/verify.mjs checks it): coverage figures on the site come from this job, and
+      # a floating '26' installed 26.13.0 while the pin was 26.11.1.
       - uses: actions/setup-node@v7
         with:
-          node-version: '26'
+          node-version: '26.11.1'
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          version: '0.13.0'
       - uses: actions/cache@v6
         with:
           path: models/v0.3

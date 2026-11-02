@@ -138,19 +138,19 @@ console.log(PACKS.major_20.kind); // cld3-pack
 <!-- packs:start -->
 | Pack | Languages | Method | Pack | All-in | All-in gzipped | FLORES sentences | FLORES first 20 code points | MASSIVE utterances |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `der_3` | de, en, ru | fastText native PQ + int8 | 78.0 kB | 95.4 kB | 76.5 kB | 100.00% | 98.42% | 98.54% |
-| `deferi_6` | de, en, es, fr, it, ru | fastText native PQ + int8 | 127.5 kB | 144.8 kB | 119.3 kB | 99.97% | 93.74% | 96.92% |
-| `major_20` | ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pl, pt, ru, th, tr, ur, vi, zh | CLD3 PQ + int8 | 110.4 kB | 284.0 kB | 201.6 kB | 99.65% | 91.39% | 95.03% |
-| `full` | 109 CLD3 labels | CLD3 PQ + int8 | 130.4 kB | 304.0 kB | 217.4 kB | 97.77% | 78.80% | 88.60% |
+| `der_3` | de, en, ru | fastText native PQ + int8 | 78.0 kB | 95.4 kB | 77.5 kB | 100.00% | 98.42% | 98.54% |
+| `deferi_6` | de, en, es, fr, it, ru | fastText native PQ + int8 | 127.5 kB | 144.8 kB | 119.8 kB | 99.97% | 93.74% | 96.92% |
+| `major_20` | ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pl, pt, ru, th, tr, ur, vi, zh | CLD3 PQ + int8 | 110.4 kB | 284.0 kB | 202.6 kB | 99.65% | 91.39% | 95.03% |
+| `full` | 109 CLD3 labels | CLD3 PQ + int8 | 130.4 kB | 304.0 kB | 218.7 kB | 97.77% | 78.80% | 88.60% |
 
 The same languages on the other runtime, measured in the same run but not shipped as packs:
 
 | Languages of | Method | Pack | All-in | All-in gzipped | FLORES sentences | FLORES first 20 code points | MASSIVE utterances |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `der_3` | CLD3 PQ + int8 | 106.6 kB | 280.2 kB | 198.4 kB | 99.97% | 94.99% | 97.19% |
-| `deferi_6` | CLD3 PQ + int8 | 107.3 kB | 280.9 kB | 199.0 kB | 99.93% | 89.25% | 94.84% |
-| `major_20` | fastText native PQ + int8 | 241.8 kB | 259.1 kB | 213.7 kB | 99.70% | 92.82% | 91.94% |
-| `full` | fastText native PQ + int8 | 708.1 kB | 725.4 kB | 579.1 kB | 93.14% | 73.61% | 87.17% |
+| `der_3` | CLD3 PQ + int8 | 106.6 kB | 280.2 kB | 199.4 kB | 99.97% | 94.99% | 97.19% |
+| `deferi_6` | CLD3 PQ + int8 | 107.3 kB | 280.9 kB | 199.9 kB | 99.93% | 89.25% | 94.84% |
+| `major_20` | fastText native PQ + int8 | 241.8 kB | 259.1 kB | 214.1 kB | 99.70% | 92.82% | 91.94% |
+| `full` | fastText native PQ + int8 | 708.1 kB | 725.4 kB | 581.1 kB | 93.14% | 73.61% | 87.17% |
 <!-- packs:end -->
 
 kB = 1,000 bytes. **All-in** is what an application downloads to identify text: the pack plus its runtime, the fastText JavaScript or the CLD3 JavaScript and its WebAssembly core (see [Size](#size)); exact byte counts are in `defuss-lid/packs` (`PACKS.der_3.bytes`). Top-1 accuracy on held-out FLORES-200 devtest sentences (and their first 20 code points) and MASSIVE 1.1 test utterances, measured on 2026-11-02; the full pack is evaluated on the 78 FLORES and 51 MASSIVE labels it shares with the benchmarks, not on all 109. For 3 languages the fastText pack is smaller and more accurate than CLD3; for 6 languages it is a larger file than its CLD3 counterpart, yet more accurate and, with the much smaller runtime, smaller all-in. For 20 languages the measurements are mixed: CLD3 is more accurate on MASSIVE utterances and smaller all-in once gzipped, fastText more accurate on FLORES sentences and their prefixes and smaller all-in uncompressed. For all languages CLD3 is both smaller and more accurate. [results-v0.3.md](documentation/results-v0.3.md) has the remaining candidates, exact-subset baselines, paired bootstrap intervals and per-language failures (pruning hurts Chinese most).
@@ -162,16 +162,16 @@ Every file of the release, including the per-set candidates and baselines, is on
 <!-- sizes:start -->
 | File | Size | Gzipped | What |
 | --- | ---: | ---: | --- |
-| `dist/index.js` (+ shared chunk) | 17.3 kB | 6.2 kB | fastText runtime: `LidModel`, `loadModel` |
-| `dist/cld3-pack.js` (+ shared chunk) | 87.9 kB | 17.4 kB | CLD3 pack runtime with the Emscripten glue |
+| `dist/index.js` (+ shared chunk) | 17.3 kB | 6.3 kB | fastText runtime: `LidModel`, `loadModel` |
+| `dist/cld3-pack.js` (+ shared chunk) | 87.9 kB | 17.8 kB | CLD3 pack runtime with the Emscripten glue |
 | `runtime/cld3-core.bin.gz` | 85.6 kB | 85.6 kB | shared CLD3 WebAssembly core, stored gzip-compressed; once per app |
-| `der_3` | 78.0 kB | 70.3 kB | 3 languages, fastText pack |
-| `deferi_6` | 127.5 kB | 113.1 kB | 6 languages, fastText pack |
-| `major_20` | 110.4 kB | 98.6 kB | 20 languages, CLD3 pack |
-| `full` | 130.4 kB | 114.4 kB | 109 languages, CLD3 pack |
+| `der_3` | 78.0 kB | 71.2 kB | 3 languages, fastText pack |
+| `deferi_6` | 127.5 kB | 113.4 kB | 6 languages, fastText pack |
+| `major_20` | 110.4 kB | 99.2 kB | 20 languages, CLD3 pack |
+| `full` | 130.4 kB | 115.3 kB | 109 languages, CLD3 pack |
 <!-- sizes:end -->
 
-kB = 1,000 bytes. A page that uses one fastText pack loads the fastText runtime and the pack; a CLD3 page loads the CLD3 runtime and the core once, plus each pack. `scripts/verify.mjs` recomputes this table from the built files and fails when it differs.
+kB = 1,000 bytes. A page that uses one fastText pack loads the fastText runtime and the pack; a CLD3 page loads the CLD3 runtime and the core once, plus each pack. `scripts/verify.mjs` recomputes this table from the built files and fails when it differs. Gzipped sizes come from fflate at level 9, which gives the same bytes on every machine; Node.js zlib at the same level changes with the Node.js release and came out up to 2.7 % smaller for these files (2026-11-02).
 
 ## Build your own pack
 

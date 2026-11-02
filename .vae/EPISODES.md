@@ -38,3 +38,8 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-02T09:53:55Z s=d9c6d40f FINDING .gitignore:dist/ learn=verifier: scripts/verify.mjs site-runtime-copy now runs git check-ignore over the site files; a probe re-adding `dist/` failed with 8 findings
 2026-11-02T09:53:55Z s=d9c6d40f FINDING SHA256SUMS, scripts/package_release.py, scripts/browser_check.mjs learn=none: one-time cleanup requested by the maintainer
 2026-11-02T09:53:55Z s=d9c6d40f FINDING scripts/coverage.mjs + docs/index.html coverage block learn=verifier: `make coverage` runs scripts/coverage.mjs --check after measuring
+2026-11-02T12:05:08Z s=d9c6d40f FAIL tests.e2e.1
+2026-11-02T12:07:52Z s=d9c6d40f DONE fp=6274259d5d78 cov=96.3% paths=.github/workflows/verify.yml,README.md,bun.lock,docs/index.html(+4)
+2026-11-02T12:07:52Z s=d9c6d40f FINDING scripts/sizes.mjs:measure learn=verifier: scripts/verify.mjs check=versions fails when the verify job's node-version|bun-version|uv version differs from mise.toml; probe with node-version '26' failed as
+2026-11-02T12:07:52Z s=d9c6d40f FINDING tests/serve.test.ts:9 learn=test: the runtimes job runs this Vitest test on windows-latest, which fails on recurrence
+2026-11-02T12:07:52Z s=d9c6d40f FINDING README.md:174 P (precision) learn=none: one-off wording; the figures themselves are gate-checked

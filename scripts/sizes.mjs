@@ -19,7 +19,7 @@
 import {readdir, readFile, writeFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {gzipSync} from 'node:zlib';
+import {gzipSync} from 'fflate';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 export const START = '<!-- sizes:start -->';
@@ -28,7 +28,16 @@ export const END = '<!-- sizes:end -->';
 const kB = bytes => `${(bytes / 1000).toFixed(1)} kB`;
 const percent = value => `${value}%`;
 
-/** Raw and on-the-wire (gzip -9) bytes of files; already-compressed files count as stored. */
+/**
+ * Raw and on-the-wire bytes of files; already-compressed files count as stored. The gzip figure uses fflate at level 9,
+ * not node:zlib. Why: zlib does not promise the same output across builds, and Node.js updates its bundled zlib in
+ * minor releases, so figures computed with node:zlib differ between machines and the gate comparing them fails.
+ * fflate is pure JavaScript pinned in bun.lock, so the same bytes give the same figure under every Node.js, Bun and CPU.
+ *
+ * VERIFIED: node:zlib level 9 compressed models/v0.3/der_3.dlid to 70,341 bytes on Node.js 26.11.1 (zlib 1.2.12) and
+ * to 72,047 on 26.13.0 (zlib 1.3.2.1-motley), which CI had installed; fflate gave 71,164 on both and on Bun 1.4.3
+ * (2026-11-02).
+ */
 async function measure(files) {
   const bytes = await Promise.all(files.map(file => readFile(join(root, file))));
   const raw = bytes.reduce((sum, b) => sum + b.length, 0);
