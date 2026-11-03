@@ -1,19 +1,21 @@
 /**
  * Website e2e (docs/index.html): every section and interactive element, in Chromium, Firefox and WebKit.
  *
- * The page fixture (fixtures.mjs) answers the pinned Hugging Face model URLs from models/v0.3/ and fails a test on any
+ * The page fixture (fixtures.mjs) answers the pinned Hugging Face model URLs from models/ and fails a test on any
  * console error, page error, failed request or HTTP >= 400, so every test here also proves the page loads cleanly.
  * Facts on the page are checked against their sources, not against copies: pack bytes and labels against the runtime
  * registry the page itself ships (assets/lib/dist/packs/index.js) and models.lock.json, the accuracy figures against
- * documentation/results-v0.3.md. scripts/verify.mjs separately checks every generated block against a recomputation.
+ * documentation/results-v0.3.md and documentation/results-dno-pq.md. scripts/verify.mjs separately checks every generated block against a recomputation.
  */
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+import {lockedFiles} from '../scripts/lock.mjs';
 import {CDN_BASE, HF_BASE, expect, repoRoot, test} from './fixtures.mjs';
 
-const report = readFileSync(join(repoRoot, 'documentation/results-v0.3.md'), 'utf8');
+const report = ['results-v0.3.md', 'results-dno-pq.md'].map(name => readFileSync(join(repoRoot, 'documentation', name), 'utf8')).join('\n');
 const readme = readFileSync(join(repoRoot, 'README.md'), 'utf8');
-const lock = JSON.parse(readFileSync(join(repoRoot, 'models.lock.json'), 'utf8'));
+const locked = lockedFiles(JSON.parse(readFileSync(join(repoRoot, 'models.lock.json'), 'utf8')));
 const html = readFileSync(join(repoRoot, 'docs/index.html'), 'utf8');
 
 /** The snippet contract shared with the README runner: [data-snippet tags, first line], in page order. */
@@ -35,7 +37,7 @@ const DEMO = [
   {model: 'der_3', sample: 'de', expected: 'de', labels: 3},
   {model: 'deferi_6', sample: 'fr', expected: 'fr', labels: 6},
   {model: 'major_20', sample: 'ja', expected: 'ja', labels: 20, cld3: true},
-  {model: 'full', sample: 'la', expected: 'la', labels: 109, cld3: true},
+  {model: 'full', sample: 'ko', expected: 'ko', labels: 109, cld3: true},
 ];
 
 const decode = text => text.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
@@ -68,9 +70,18 @@ test('header: brand, nav anchors, external links', async ({page}) => {
 
 test('hero: claim, runtimes and calls to action', async ({page}) => {
   await open(page);
-  await expect(page.locator('h1')).toHaveText('Language identification in 78 kB');
+  await expect(page.locator('h1')).toHaveText('Extremely lightweight language identification');
   await expect(page.locator('.lid-runtimes li')).toHaveText(['Node.js', 'Bun', 'Browsers']);
-  await expect(page.locator('.lid-band .mk-stat-value')).toHaveText(['78.0\u00a0kB', '98.42%', '130.4\u00a0kB', '0']);
+  // The band and the note are generated (scripts/sizes.mjs, checked by verify.mjs); here they must agree with the
+  // major_20 card and accuracy row of the same page, which the packs and accuracy tests check against their sources.
+  const stats = page.locator('.lid-band .mk-stat-value');
+  await expect(stats).toHaveCount(4);
+  await expect(stats.nth(0)).toHaveText(/^\d+\.\d\u00a0kB$/);
+  const first20 = await page.locator('#accuracy-table tr[data-pack="major_20"] [data-cell]').nth(5).textContent();
+  await expect(stats.nth(1)).toHaveText(`${first20}%`);
+  await expect(stats.nth(3)).toHaveText('0');
+  const allIn = await page.locator('#packs [data-pack="major_20"] .lid-budget tbody tr').first().locator('td').first().textContent();
+  await expect(page.locator('.lid-hero-note')).toContainText(`${allIn.replace(' (better)', '').replace(' ', '\u00a0')} gzipped with its WebAssembly runtime`);
   await page.getByRole('link', {name: 'Try the live demo'}).click();
   await expect(page.locator('#demo-title')).toBeInViewport();
   await expect(page.getByRole('link', {name: 'Use it in your app'})).toHaveAttribute('href', '#use');
@@ -96,6 +107,23 @@ test('theme toggle switches dark mode and persists across reloads', async ({page
   await expect(toggle).not.toBeChecked();
 });
 
+test('demo: opens with major_20, one sample per major_20 language, each identified as itself', async ({page}) => {
+  await open(page);
+  const rows = page.locator('#demo-results li');
+  const registry = await page.evaluate(async () => (await import(new URL('assets/lib/dist/packs/index.js', document.baseURI).href)).PACKS);
+  await expect(page.locator('#demo-model')).toHaveValue('major_20');
+  await expect(page.locator('#demo-bytes')).toHaveText(`${(registry.major_20.bytes / 1000).toFixed(1)} kB`);
+  const samples = page.locator('.lid-samples [data-sample]');
+  const codes = await samples.evaluateAll(items => items.map(item => item.dataset.sample));
+  expect([...codes].sort()).toEqual([...registry.major_20.languages].sort());
+  for (const button of await samples.all()) {
+    const code = await button.getAttribute('data-sample');
+    await button.click();
+    await expect(rows.first(), `${code} sample`).toHaveAttribute('data-language', code);
+    await expect(rows.first().locator('.badge'), `${code} sample`).toHaveText('reliable');
+  }
+});
+
 test('demo: every model loads and identifies its sample', async ({page}) => {
   await open(page);
   const status = page.locator('#demo-status');
@@ -106,6 +134,8 @@ test('demo: every model loads and identifies its sample', async ({page}) => {
     await expect(status, `${model} loads`).toHaveText('Ready');
     await expect(page.locator('#demo-bytes')).toHaveText(`${(registry[model].bytes / 1000).toFixed(1)} kB`);
     await expect(page.locator('#demo-labels')).toHaveText(String(labels));
+    // the file link names the pinned release file the registry describes
+    await expect(page.locator('#demo-file')).toHaveAttribute('href', locked[registry[model].asset].page);
     const button = page.locator(`[data-sample="${sample}"]`);
     await button.click();
     await expect(page.locator('#demo-text')).toHaveValue(await button.getAttribute('data-text'));
@@ -122,24 +152,30 @@ test('demo: every model loads and identifies its sample', async ({page}) => {
 });
 
 test('demo: the letter boost re-ranks by alphabet and clears reliable', async ({page}) => {
+  // the weight of the runtime copy the page loads
+  const {CLD3_BOOST_WEIGHT} = await import(pathToFileURL(join(repoRoot, 'docs/assets/lib/dist/cld3-pack.js')).href);
   await open(page);
   const rows = page.locator('#demo-results li');
   const boost = page.locator('#demo-boost');
-  await expect(boost).not.toBeChecked();
+  // on by default, like the runtimes
+  await expect(boost).toBeChecked();
   await page.selectOption('#demo-model', 'major_20');
   await expect(page.locator('#demo-status')).toHaveText('Ready');
-  await page.locator('[data-sample="ru-word"]').click();
-  // CLD3 alone calls the Russian word Portuguese; the letter check takes away its reliable flag
-  await expect(rows.first()).toHaveAttribute('data-language', 'pt');
+  await page.locator('[data-sample="vi-start"]').click();
+  await expect(rows.first()).toHaveAttribute('data-language', 'vi');
+  await expect(rows.first().locator('.badge')).toHaveText('not reliable');
+  // the substituted answer's score is CLD3's weight × the share of letters its alphabet explains (all of them)
+  await expect(rows.first().locator('.lid-result-score')).toHaveText(CLD3_BOOST_WEIGHT.toFixed(3));
+  await expect(rows.first().locator('progress')).toHaveAttribute('max', String(1 + CLD3_BOOST_WEIGHT));
+  // CLD3 alone calls the two Vietnamese words Hindi; the letter check takes away its reliable flag
+  await boost.uncheck();
+  await expect(rows.first()).toHaveAttribute('data-language', 'hi');
   await expect(rows.first().locator('.badge')).toHaveText('not reliable');
   await boost.check();
-  await expect(rows.first()).toHaveAttribute('data-language', 'ru');
-  await expect(rows.first().locator('.badge')).toHaveText('not reliable');
-  await expect(rows.first().locator('.lid-result-score')).toHaveText('1.000');
-  await expect(rows.first().locator('progress')).toHaveAttribute('max', '2');
   // fastText: boosted scores add up to 1 for letters that fit completely
   await page.selectOption('#demo-model', 'der_3');
   await expect(page.locator('#demo-status')).toHaveText('Ready');
+  await page.locator('#demo-text').fill('гроза');
   await expect(rows.first()).toHaveAttribute('data-language', 'ru');
   expect(Number(await rows.first().locator('.lid-result-score').textContent())).toBeGreaterThan(1);
   await boost.uncheck();
@@ -163,7 +199,9 @@ test('demo: typing predicts (debounced), blank text abstains, samples fill the t
     await expect(rows.first()).toHaveAttribute('data-language', /^[a-z]{2,3}(-[A-Za-z]+)?$/);
   }
   // an allowlisted pack never answers "none of these": Ukrainian comes out as Russian in der_3
-  await page.locator('[data-sample="uk"]').click();
+  await page.selectOption('#demo-model', 'der_3');
+  await expect(page.locator('#demo-status')).toHaveText('Ready');
+  await text.fill('Завтра вранці ми зустрінемося в кав’ярні біля вокзалу.');
   await expect(rows.first()).toHaveAttribute('data-language', 'ru');
   await expect(page.locator('#demo-file')).toHaveAttribute('href', /\/blob\/24d27e5b42d002d69fded6301607160919151370\/der_3\.dlid$/);
 });
@@ -180,7 +218,7 @@ test('packs: cards match the runtime registry and models.lock.json', async ({pag
     const shown = await card.locator('.lid-langs .badge').allTextContents();
     expect(shown.sort(), `${pack.name} languages`).toEqual([...pack.languages].sort());
     await expect(card.locator('.lid-import')).toHaveText(`defuss-lid/packs/${pack.name}`);
-    expect(lock.files[`${pack.name}.${pack.format}`].bytes).toBe(pack.bytes);
+    expect(locked[pack.asset].bytes).toBe(pack.bytes);
   }
   await expect(page.locator('#packs .lid-pack')).toHaveCount(4);
   // the budget table adds up: all-in = pack + runtime, in both columns, and each pair marks at most one side better
@@ -249,6 +287,7 @@ test('accuracy and coverage: one row per shipped pack (report + registry), four 
   }
   expect(Number(await page.locator('.lid-coverage-note [data-fact="tests"]').textContent())).toBeGreaterThan(0);
   await expect(page.getByRole('link', {name: /Read the full v0\.3 report/})).toHaveAttribute('href', 'https://github.com/kyr0/defuss-lid/blob/main/documentation/results-v0.3.md');
+  await expect(page.getByRole('link', {name: /Read the DNO-PQ report/})).toHaveAttribute('href', 'https://github.com/kyr0/defuss-lid/blob/main/documentation/results-dno-pq.md');
 });
 
 test('use it: snippet contract, tabs and copy buttons', async ({page, browserName, context}) => {
@@ -269,7 +308,7 @@ test('use it: snippet contract, tabs and copy buttons', async ({page, browserNam
     }
   }
   expect(source.join('\n')).toContain(`${CDN_BASE}dist/index.js`);
-  expect(source.join('\n')).toContain(`${HF_BASE}der_3.dlid`);
+  expect(source.join('\n')).toContain(`${HF_BASE['kyr0/defuss-lid-1.0']}der_3.dlid`);
 
   // runtime tabs (defuss-shadcn Tabs)
   for (const [tab, panel] of [['Bun', '#use-bun'], ['Bundler', '#use-bundler'], ['No build', '#use-cdn'], ['Node.js', '#use-node']]) {

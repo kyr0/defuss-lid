@@ -31,7 +31,7 @@ test('every released model predicts like Node.js', async ({page}) => {
       const cld3 = file.endsWith('.cld3q');
       const {loadModel} = await import(`${PKG}/dist/index.js`);
       const {loadCld3Pack} = await import(`${PKG}/dist/cld3-pack.js`);
-      const model = cld3 ? await loadCld3Pack(`${PKG}/models/v0.3/${file}`) : await loadModel(`${PKG}/models/v0.3/${file}`);
+      const model = cld3 ? await loadCld3Pack(`${PKG}/${file}`) : await loadModel(`${PKG}/${file}`);
       try {
         return texts.map(text => model.predict(text, {k: cld3 ? 1 : 3}));
       } finally {
@@ -54,7 +54,8 @@ test('the four browser pack loaders fetch their asset and predict like Node.js',
         model.dispose?.();
       }
     }, {name, texts: reference.texts, PKG});
-    expect(actual.url).toContain(`${PKG}/models/v0.3/${name}.`);
-    compare(actual.predictions, reference.expected[`${name}.${actual.url.endsWith('.dlid') ? 'dlid' : 'cld3q'}`], name);
+    const asset = actual.url.slice(actual.url.indexOf(`${PKG}/`) + PKG.length + 1);
+    expect(asset).toMatch(new RegExp(`^models/[\\w.-]+/${name}\\.(dlid|cld3q)$`));
+    compare(actual.predictions, reference.expected[asset], name);
   }
 });

@@ -76,6 +76,7 @@
     "dist",
     "runtime",
     "models/v0.3",
+    "models/cld3-pq-dno",
     "README.md",
     "LICENSE",
     "NOTICE.md",

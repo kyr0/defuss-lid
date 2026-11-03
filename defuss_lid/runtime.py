@@ -26,6 +26,34 @@ EPSILON = 1e-5
 _WORD_CHARACTER = re.compile(r"[^ \t\n\r\v\f\0]")
 
 
+def bucket_gaps(ids):
+    """Sorted bucket `ids` as the uint16 `bucket_gaps` section (the first id, then each id minus the one before), or
+    None when a gap does not fit two bytes and the file must keep 4-byte `bucket_ids`. Model reads either form.
+
+    Why: in a re-encoded DNO-PQ pack a bucket row takes 4 code bytes and a norm byte, so a 4-byte id is almost half of
+    it, while the gaps between a pruned table's sorted ids stay far below 65,536 (VERIFIED: at most 5,103 in every v0.3
+    fastText file and fastText DNO-PQ pack). Raises ValueError for ids that are not strictly ascending.
+    """
+    gaps = np.diff(np.asarray(ids, np.int64), prepend=0)
+    if np.any(gaps[1:] < 1) or (len(gaps) and gaps[0] < 0):
+        raise ValueError("bucket IDs must be sorted and unique")
+    return gaps.astype(np.uint16) if not len(gaps) or gaps.max() <= 0xFFFF else None
+
+
+def _with_bucket_ids(arrays):
+    """`arrays` with `bucket_gaps` decoded into the `bucket_ids` every check and lookup reads, in the same position,
+    so writing the result back gives the 4-byte file's layout; other files pass."""
+    if "bucket_gaps" not in arrays:
+        return arrays
+    gaps = arrays["bucket_gaps"]
+    if "bucket_ids" in arrays or gaps.dtype != np.uint16 or gaps.ndim != 1:
+        raise ValueError("invalid bucket gaps")
+    ids = np.cumsum(gaps, dtype=np.int64)
+    if len(ids) and ids[-1] > 0xFFFFFFFF:
+        raise ValueError("invalid bucket gaps")
+    return dict(("bucket_ids", ids.astype(np.uint32)) if k == "bucket_gaps" else (k, v) for k, v in arrays.items())
+
+
 class Model:
     """A validated, read-only language-identification model.
 
@@ -36,11 +64,11 @@ class Model:
     """
 
     def __init__(self, meta, arrays):
-        self.meta, self.arrays = meta, arrays
+        self.meta, self.arrays = meta, _with_bucket_ids(arrays)
         self.words = {w: i for i, w in enumerate(meta["words"])}
         # Pruned tables keep only some hash buckets. Rows are stored words first,
         # then buckets in ascending bucket-ID order, so the row is an offset.
-        self.buckets = {int(b): len(self.words) + i for i, b in enumerate(arrays["bucket_ids"])}
+        self.buckets = {int(b): len(self.words) + i for i, b in enumerate(self.arrays["bucket_ids"])}
         self._validate()
 
     @classmethod

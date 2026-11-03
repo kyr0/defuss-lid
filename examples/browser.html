@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>defuss-lid · minimal browser example</title>
 <!--
-  The smallest no-build page: plain module imports relative to the package layout (dist/, models/v0.3/, runtime/).
+  The smallest no-build page: plain module imports relative to the package layout (dist/, models/, runtime/).
   Serve the package folder (e.g. node_modules/defuss-lid, or a checkout after `make setup && make build`) over HTTP and
   open examples/browser.html. The project site in docs/ is the full demo; this file shows the bare API.
 -->
@@ -17,11 +17,11 @@
 <p>Runs locally after loading a model; the text stays in this browser.</p>
 <label for="model">Model</label>
 <select id="model">
-  <option value="der_3.dlid">der_3 · de, en, ru · fastText (78 kB)</option>
-  <option value="deferi_6.dlid">deferi_6 · de, en, fr, es, ru, it · fastText (127 kB)</option>
-  <option value="major_20.cld3q">major_20 · 20 languages · CLD3 (110 kB)</option>
-  <option value="full.cld3q">full · 109 languages · CLD3 (130 kB)</option>
-  <option value="full/fasttext-native-exact.dlid">fastText lid.176 · 176 languages (716 kB)</option>
+  <option value="v0.3/der_3.dlid">der_3 · de, en, ru · fastText (78 kB)</option>
+  <option value="v0.3/deferi_6.dlid">deferi_6 · de, en, fr, es, ru, it · fastText (127 kB)</option>
+  <option value="cld3-pq-dno/major_20.cld3q">major_20 · 20 languages · CLD3 (110 kB)</option>
+  <option value="cld3-pq-dno/full.cld3q">full · 109 languages · CLD3 (130 kB)</option>
+  <option value="v0.3/full/fasttext-native-exact.dlid">fastText lid.176 · 176 languages (716 kB)</option>
 </select>
 <label for="text">Text</label>
 <textarea id="text">Das ist ein deutscher Satz.</textarea>
@@ -42,7 +42,7 @@
       if (loaded !== select.value) {
         result.textContent = 'Loading model…';
         const file = select.value, cld3 = file.endsWith('.cld3q');
-        const next = await (cld3 ? loadCld3Pack : loadModel)(`../models/v0.3/${file}`);
+        const next = await (cld3 ? loadCld3Pack : loadModel)(`../models/${file}`);
         model?.dispose?.(); // CLD3 packs own WebAssembly memory
         [model, loaded] = [next, file];
       }

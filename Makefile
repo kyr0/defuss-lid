@@ -25,7 +25,7 @@ setup: ## install pinned tools (mise), locked JS + Python deps, release models, 
 	bunx playwright install chromium firefox webkit
 	@if [ -d .git ]; then git config core.hooksPath .githooks; fi
 
-models: ## download and hash-check the released model files into models/v0.3/
+models: ## download and hash-check the released model files into models/
 	bun run models
 
 build: ## TypeScript → dist/ (ESM + declarations) via pkgroll

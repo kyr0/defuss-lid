@@ -42,7 +42,7 @@ def js_predictions(model_path, texts):
     script = (
         f"import fs from 'node:fs'; import {{LidModel}} from '{entry}'; "
         "const m=LidModel.fromBuffer(fs.readFileSync(process.argv[1])); "
-        "console.log(JSON.stringify(JSON.parse(process.argv[2]).map(t=>m.predict(t,{k:3}))));"
+        "console.log(JSON.stringify(JSON.parse(process.argv[2]).map(t=>m.predict(t,{k:3,boost:false}))));"
     )
     return json.loads(subprocess.check_output([*command, script, str(model_path), json.dumps(texts)], cwd=ROOT))
 

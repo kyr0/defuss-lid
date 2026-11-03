@@ -27,3 +27,4 @@ coverage/
 .ruff_cache/
 .coverage
 reports/
+dnp-tools/

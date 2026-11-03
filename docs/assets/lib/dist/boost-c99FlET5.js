@@ -296,9 +296,10 @@ function letterSupport(text, languages) {
   return new Map(languages.map((language) => [language, share(e, language)]));
 }
 const BOOST_WEIGHT = 1;
-function boostWeight(boost) {
-  if (boost === void 0 || boost === false) return 0;
-  if (boost === true) return BOOST_WEIGHT;
+const CLD3_BOOST_WEIGHT = 20;
+function boostWeight(boost, fallback = BOOST_WEIGHT) {
+  if (boost === void 0 || boost === true) return fallback;
+  if (boost === false) return 0;
   if (typeof boost !== "number" || !Number.isFinite(boost) || boost < 0) throw new RangeError("boost must be a boolean or a finite number >= 0");
   return boost;
 }
@@ -321,4 +322,4 @@ function checkTop1(text, candidates, top, weight) {
   return winner !== void 0 && (!tied || own === 0) ? { language: winner, score: best, reliable: false } : result;
 }
 
-export { BOOST_WEIGHT as B, boostWeight as b, checkTop1 as c, letterSupport as l };
+export { BOOST_WEIGHT as B, CLD3_BOOST_WEIGHT as C, boostWeight as b, checkTop1 as c, letterSupport as l };

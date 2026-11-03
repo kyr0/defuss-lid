@@ -12,15 +12,16 @@ import * as majorBrowser from '../src/packs/major_20.browser.js';
 import * as major from '../src/packs/major_20.node.js';
 import {read} from './helpers/dlid.js';
 
-const lock: {target: string; files: Record<string, {bytes: number; sha256: string}>} =
-  JSON.parse(readFileSync(new URL('../models.lock.json', import.meta.url), 'utf8'));
+type Release = {target: string; files: Record<string, {bytes: number; sha256: string}>};
+const {releases}: {releases: Release[]} = JSON.parse(readFileSync(new URL('../models.lock.json', import.meta.url), 'utf8'));
+/** Package path (`models/<release>/<file>`) → locked bytes and SHA-256. */
+const locked = Object.fromEntries(releases.flatMap(r => Object.entries(r.files).map(([path, file]) => [`${r.target}/${path}`, file])));
 
 describe('pack registry', () => {
   test('lists the four packs and agrees with models.lock.json and the files', () => {
     expect(PACK_NAMES).toEqual(['der_3', 'deferi_6', 'major_20', 'full']);
     for (const meta of Object.values(PACKS)) {
-      const locked = lock.files[meta.asset.slice(`${lock.target}/`.length)];
-      expect(locked, meta.asset).toEqual({bytes: meta.bytes, sha256: meta.sha256});
+      expect(locked[meta.asset], meta.asset).toEqual({bytes: meta.bytes, sha256: meta.sha256});
       const bytes = read(meta.asset);
       expect(bytes.length).toBe(meta.bytes);
       expect(createHash('sha256').update(bytes).digest('hex')).toBe(meta.sha256);

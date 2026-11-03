@@ -24,12 +24,13 @@ import {createHash} from 'node:crypto';
 import {cp, mkdir, readdir, readFile, rm, writeFile} from 'node:fs/promises';
 import {basename, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {lockedFiles} from './lock.mjs';
 import {collect, problems} from './snippets.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const work = join(root, 'tmp/e2e'), www = join(work, 'www'), output = join(root, 'output/e2e');
 const consumer = join(www, 'consumer'), installed = join(consumer, 'node_modules/defuss-lid');
-const lock = JSON.parse(await readFile(join(root, 'models.lock.json'), 'utf8'));
+const locked = lockedFiles(JSON.parse(await readFile(join(root, 'models.lock.json'), 'utf8')));
 const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'));
 const summary = {startedAt: new Date().toISOString(), version: pkg.version, steps: {}, snippets: []};
 
@@ -47,7 +48,7 @@ await mkdir(join(output, 'snippets'), {recursive: true});
 // 1. Pack and inspect the tarball.
 const tarball = join(work, basename(run('bun', ['pm', 'pack', '--destination', work, '--quiet'], {cwd: root}).trim().split('\n').at(-1)));
 const packed = run('tar', ['-tzf', tarball]).split('\n').filter(Boolean).map(file => file.replace(/^package\//, '')).sort();
-const expectedModels = Object.keys(lock.files).map(file => `${lock.target}/${file}`);
+const expectedModels = Object.keys(locked);
 const allowed = file => ['package.json', 'README.md', 'LICENSE', 'NOTICE.md'].includes(file) || /^licenses\/[\w.-]+\.txt$/.test(file) ||
   /^dist\/.+\.(js|d\.ts)$/.test(file) || /^runtime\/cld3-(core\.bin\.gz|core\.json|glue\.js|glue\.d\.ts|layout\.js|layout\.d\.ts)$/.test(file) ||
   expectedModels.includes(file);
@@ -201,12 +202,12 @@ const parity = run('node', ['--input-type=module', '-e', `
   import {readFileSync} from 'node:fs';
   import {LidModel} from 'defuss-lid';
   import {createCld3Pack} from 'defuss-lid/cld3-pack';
-  const files = ${JSON.stringify(Object.keys(lock.files).filter(f => /\.(dlid|cld3q)$/.test(f)))};
+  const files = ${JSON.stringify(Object.keys(locked).filter(f => /\.(dlid|cld3q)$/.test(f)))};
   const texts = ${JSON.stringify(fixtures)};
   const core = readFileSync(new URL(import.meta.resolve('defuss-lid/runtime/cld3-core.bin.gz')));
   const out = {};
   for (const file of files) {
-    const bytes = readFileSync(new URL(import.meta.resolve('defuss-lid/models/v0.3/' + file)));
+    const bytes = readFileSync(new URL(import.meta.resolve('defuss-lid/' + file)));
     const cld3 = file.endsWith('.cld3q');
     const model = cld3 ? await createCld3Pack(bytes, {core}) : LidModel.fromBuffer(bytes);
     out[file] = texts.map(text => model.predict(text, {k: cld3 ? 1 : 3}));

@@ -1,7 +1,9 @@
 /**
  * Dataset benchmark used by scripts/reproduce*.py: one model per process (so load time and RSS are per model), every
  * raw prediction retained for paired bootstrap analysis. Runs the built runtime in dist/ (`bun run build` first), the
- * same code the npm package ships.
+ * same code the npm package ships. Predictions are the model's own (`boost: false`): the reports this feeds measure
+ * compression against exact baselines, and the letter boost, on by default since 2026-11-03, would mix a second
+ * change into every paired comparison (scripts/boost_eval.mjs measures the boost separately).
  *
  * UNKNOWN: not rerun since its imports moved to dist/ on 2026-11-02; a run needs the downloaded corpora.
  */
@@ -31,14 +33,14 @@ if (kind === 'dlid') {
   const bytes = fs.readFileSync(modelPath), m = LidModel.fromBuffer(bytes);
   modelBytes = bytes.length; modelHash = crypto.createHash('sha256').update(bytes).digest('hex');
   labels = m.meta.labels;
-  predict = text => m.predict(text,{languages:allowed})[0] || {language: 'und', score: 0};
+  predict = text => m.predict(text,{languages:allowed,boost:false})[0] || {language: 'und', score: 0};
 } else if(kind === 'cld3-pack') {
   if(allowed)throw Error('CLD3 allowlists must be built into the pack');
   const {createCld3Pack}=await import('../dist/cld3-pack.js');
   const bytes=fs.readFileSync(modelPath);
   const m=await createCld3Pack(bytes,{core:fs.readFileSync(new URL('../runtime/cld3-core.bin.gz',import.meta.url))});
   labels=m.meta.labels;modelBytes=bytes.length;modelHash=crypto.createHash('sha256').update(bytes).digest('hex');
-  predict=text=>m.predict(text)[0]||{language:'und',score:0};dispose=()=>m.dispose();
+  predict=text=>m.predict(text,{boost:false})[0]||{language:'und',score:0};dispose=()=>m.dispose();
   runtimeArtifactBytes=['../runtime/cld3-core.bin.gz','../dist/cld3-pack.js',...fs.readdirSync(new URL('../dist/',import.meta.url)).filter(f=>/^container-.+\.js$/.test(f)).map(f=>'../dist/'+f)]
     .reduce((n,p)=>n+fs.statSync(new URL(p,import.meta.url)).size,0);
 } else {

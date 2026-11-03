@@ -92,11 +92,11 @@ describe('CLD3 pack inference', () => {
   test('options, errors and lifecycle', async () => {
     const pack = await createCld3Pack(model('20/cld3-pq-int8.cld3q'), {core});
     expect(pack.predict('')).toEqual([]);
-    expect(pack.predict('Das ist ein deutscher Satz.', {threshold: 1})[0]!.score).toBe(1);
+    expect(pack.predict('Das ist ein deutscher Satz.', {threshold: 1, boost: false})[0]!.score).toBe(1);
     // An allowlisted pack renormalizes over its labels, so take the threshold from the observed score.
-    const ambiguous = pack.predict('Hallo')[0]!.score;
+    const ambiguous = pack.predict('Hallo', {boost: false})[0]!.score;
     expect(ambiguous).toBeLessThan(1);
-    expect(pack.predict('Hallo', {threshold: ambiguous + (1 - ambiguous) / 2})).toEqual([]);
+    expect(pack.predict('Hallo', {threshold: ambiguous + (1 - ambiguous) / 2, boost: false})).toEqual([]);
     expect(() => pack.predict('x', {k: 2 as 1})).toThrow(/top-1/);
     expect(() => pack.predict('x', {languages: ['de']} as never)).toThrow(/allowlist/);
     expect(() => pack.predict('x', {threshold: -1})).toThrow(RangeError);
@@ -134,8 +134,8 @@ describe('CLD3 pack inference', () => {
     const provider = await loadCld3();
     expect(provider.predict('Das ist ein deutscher Satz.')[0]!.language).toBe('de');
     expect(provider.predict('  ')).toEqual([]);
-    expect(provider.predict('ok')[0]!.score).toBeLessThan(0.99);
-    expect(provider.predict('ok', {threshold: 0.99})).toEqual([]);
+    expect(provider.predict('ok', {boost: false})[0]!.score).toBeLessThan(0.99);
+    expect(provider.predict('ok', {threshold: 0.99, boost: false})).toEqual([]);
     expect(() => provider.predict('hello', {k: 2 as 1})).toThrow(RangeError);
     expect(() => provider.predict('hello', {languages: ['de']} as never)).toThrow(RangeError);
     expect(() => provider.predict('hello', {threshold: 2})).toThrow(RangeError);

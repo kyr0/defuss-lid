@@ -80,14 +80,17 @@ for (const button of document.querySelectorAll('.mk-code-block-copy')) {
 }
 
 // ---- live demo --------------------------------------------------------------------------------------------------------
-const HF = 'https://huggingface.co/kyr0/defuss-lid-1.0/resolve/24d27e5b42d002d69fded6301607160919151370/';
-const HF_PAGE = 'https://huggingface.co/kyr0/defuss-lid-1.0/blob/24d27e5b42d002d69fded6301607160919151370/';
+// Each pack from its pinned Hugging Face release (models.lock.json): fastText from the v0.3 release, CLD3 DNO-PQ from
+// kyr0/cld3-pq-dno. The e2e suite checks every URL against the lock.
+const V03 = 'kyr0/defuss-lid-1.0/{kind}/24d27e5b42d002d69fded6301607160919151370/';
+const DNO = 'kyr0/cld3-pq-dno/{kind}/a186ded69dae2e46b329af8568e5b2c0fa29cee5/';
 const MODELS = {
-  der_3: {file: 'der_3.dlid'},
-  deferi_6: {file: 'deferi_6.dlid'},
-  major_20: {file: 'major_20.cld3q', cld3: true},
-  full: {file: 'full.cld3q', cld3: true},
+  der_3: {file: 'der_3.dlid', release: V03},
+  deferi_6: {file: 'deferi_6.dlid', release: V03},
+  major_20: {file: 'major_20.cld3q', release: DNO, cld3: true},
+  full: {file: 'full.cld3q', release: DNO, cld3: true},
 };
+const hf = ({file, release}, kind) => `https://huggingface.co/${release.replace('{kind}', kind)}${file}`;
 
 const ui = {
   text: $('demo-text'), model: $('demo-model'), results: $('demo-results'), empty: $('demo-empty'),
@@ -106,7 +109,9 @@ let runtime;
 const getRuntime = () => (runtime ??= Promise.all([
   import('./lib/dist/index.js'), import('./lib/dist/cld3-pack.js'), import('./lib/dist/packs/index.js'),
 ]).then(([fastText, cld3, packs]) => ({
-  loadModel: fastText.loadModel, loadCld3Pack: cld3.loadCld3Pack, PACKS: packs.PACKS, boostWeight: fastText.BOOST_WEIGHT,
+  loadModel: fastText.loadModel, loadCld3Pack: cld3.loadCld3Pack, PACKS: packs.PACKS,
+  // each runtime has its own default weight (tuned separately); the score bars scale to the active one
+  boostWeights: {fastText: fastText.BOOST_WEIGHT, cld3: cld3.CLD3_BOOST_WEIGHT},
 })).catch(error => {
   runtime = undefined; // a later retry imports again
   throw error;
@@ -124,9 +129,8 @@ const setStatus = (state, text) => {
 };
 
 const showFile = name => {
-  const {file} = MODELS[name];
-  ui.file.href = HF_PAGE + file;
-  ui.fileName.textContent = file;
+  ui.file.href = hf(MODELS[name], 'blob');
+  ui.fileName.textContent = MODELS[name].file;
 };
 
 async function selectModel(name) {
@@ -136,14 +140,14 @@ async function selectModel(name) {
   ui.labels.textContent = ui.load.textContent = ui.time.textContent = 'pending';
   setStatus('loading', `Loading ${name}…`);
   try {
-    const {loadModel, loadCld3Pack, PACKS, boostWeight} = await getRuntime();
+    const {loadModel, loadCld3Pack, PACKS, boostWeights} = await getRuntime();
     const {bytes} = PACKS[name];
     if (ticket === generation) ui.bytes.textContent = `${(bytes / 1000).toFixed(1)} kB`;
     const started = performance.now();
     let model = fastTextCache.get(name);
     if (!model) {
       // CLD3: the shared core resolves relative to cld3-pack.js (assets/lib/runtime/cld3-core.bin.gz)
-      model = spec.cld3 ? await loadCld3Pack(HF + spec.file) : await loadModel(HF + spec.file);
+      model = spec.cld3 ? await loadCld3Pack(hf(spec, 'resolve')) : await loadModel(hf(spec, 'resolve'));
       if (!spec.cld3) fastTextCache.set(name, model);
     }
     const loadTime = performance.now() - started;
@@ -152,7 +156,7 @@ async function selectModel(name) {
       return;
     }
     if (active?.cld3) active.model.dispose(); // each CLD3 pack owns a WebAssembly instance
-    active = {name, model, cld3: Boolean(spec.cld3), boostWeight};
+    active = {name, model, cld3: Boolean(spec.cld3), boostWeight: spec.cld3 ? boostWeights.cld3 : boostWeights.fastText};
     ui.labels.textContent = number.format(model.meta.labels.length);
     ui.load.textContent = ms(loadTime);
     setStatus('ready', 'Ready');

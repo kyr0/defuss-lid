@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 /**
  * Size and accuracy figures of the README and the website, computed from the built files, the release files and the
- * measured report: `node scripts/sizes.mjs` prints them, `--write` replaces every generated block, and
+ * measured reports: `node scripts/sizes.mjs` prints them, `--write` replaces every generated block, and
  * scripts/verify.mjs fails when a block differs from a fresh computation.
  *
  * Generated blocks (between `<!-- NAME:start -->` and `<!-- NAME:end -->`):
  *   README.md        sizes (runtime and pack files), packs (all-in budget, accuracy, same-language alternative)
- *   docs/index.html  budget:<pack> (one card per recommended pack), accuracy (rows of the accuracy table)
+ *   docs/index.html  meta (page description), hero-note and stats (the default pack's gzipped size and accuracy),
+ *                    budget:<pack> (one card per recommended pack), accuracy (rows of the accuracy table)
+ *
+ * The README reports the model's own accuracy (`boost: false`, "Compression results" of the reports); the website shows
+ * what a page gets by default, the letter boost on ("Default results"), on both sides of every comparison.
  *
  * Why generated: the deciding number for an application is the all-in download, pack plus runtime, and the two
  * runtimes differ by an order of magnitude (fastText is plain JavaScript, CLD3 adds a WebAssembly core). Pack sizes
@@ -72,19 +76,27 @@ export async function runtimes() {
   };
 }
 
+/** The measured reports: v0.3 (fastText packs and every alternative) and the CLD3 DNO-PQ packs. */
+export const REPORTS = ['documentation/results-v0.3.md', 'documentation/results-dno-pq.md'];
+
 /**
- * Rows of the "Compression results" table of the measured report, keyed `set|method`. Only that section is read:
- * later tables share its row shape with other columns (macro-F1), and parsing the whole file let them overwrite it.
+ * Rows of one table of the measured reports, keyed `set|method`: "Compression results" (`boost: false`) or "Default
+ * results" (letter boost on). Only that section is read: later tables share its row shape with other columns
+ * (macro-F1), and parsing the whole file let them overwrite it. A report without the section contributes no rows.
  */
-export async function reportRows() {
-  const report = await readFile(join(root, 'documentation/results-v0.3.md'), 'utf8');
-  const section = report.split(/^## /m).find(part => part.startsWith('Compression results\n'));
-  if (!section) throw new Error('documentation/results-v0.3.md has no "## Compression results" section');
+export async function reportRows(heading = 'Compression results') {
   const rows = new Map();
-  for (const [, set, method, , flores, first20, massive] of section.matchAll(
-    /^\| (3|6|20|full) \| ((?:CLD3|fastText)[^|]*?) \| ([\d.]+) \| ([\d.]+) \| ([\d.]+) \| ([\d.]+) \|$/gm)) {
-    rows.set(`${set}|${method}`, {flores, first20, massive});
+  for (const file of REPORTS) {
+    const report = await readFile(join(root, file), 'utf8');
+    const section = report.split(/^## /m).find(part => part.startsWith(`${heading}\n`));
+    if (!section) continue;
+    for (const [, set, method, , flores, first20, massive] of section.matchAll(
+      /^\| (3|6|20|full) \| ((?:CLD3|fastText)[^|]*?) \| ([\d.]+) \| ([\d.]+) \| ([\d.]+) \| ([\d.]+) \|$/gm)) {
+      if (rows.has(`${set}|${method}`)) throw new Error(`${file}: set ${set}, ${method} is already reported`);
+      rows.set(`${set}|${method}`, {flores, first20, massive});
+    }
   }
+  if (!rows.size) throw new Error(`no report (${REPORTS.join(', ')}) has a "## ${heading}" section`);
   return rows;
 }
 
@@ -95,23 +107,23 @@ export async function reportRows() {
 const CHOICES = {
   der_3: {set: '3', method: 'fastText native PQ + int8', alt: {method: 'CLD3 PQ + int8', file: '3/cld3-pq-int8.cld3q'}},
   deferi_6: {set: '6', method: 'fastText native PQ + int8', alt: {method: 'CLD3 PQ + int8', file: '6/cld3-pq-int8.cld3q'}},
-  major_20: {set: '20', method: 'CLD3 PQ + int8', alt: {method: 'fastText native PQ + int8', file: '20/fasttext-native-pq-int8.dlid'}},
-  full: {set: 'full', method: 'CLD3 PQ + int8', alt: {method: 'fastText native PQ + int8', file: 'full/fasttext-native-pq-int8.dlid'}},
+  major_20: {set: '20', method: 'CLD3 DNO-PQ', alt: {method: 'fastText native PQ + int8', file: '20/fasttext-native-pq-int8.dlid'}},
+  full: {set: 'full', method: 'CLD3 DNO-PQ', alt: {method: 'fastText native PQ + int8', file: 'full/fasttext-native-pq-int8.dlid'}},
 };
 
 /** All figures of the four packs: pack, runtime, all-in (raw and gzip), accuracy, and the same for the alternative. */
 export async function packFigures() {
   const {PACKS} = await import(new URL('../dist/packs/index.js', import.meta.url).href);
-  const [runtime, rows] = await Promise.all([runtimes(), reportRows()]);
+  const [runtime, rows, boosted] = await Promise.all([runtimes(), reportRows(), reportRows('Default results')]);
   const figures = [];
   for (const pack of Object.values(PACKS)) {
     const choice = CHOICES[pack.name];
     const describe = async (file, method) => {
       const family = method.startsWith('CLD3') ? runtime.cld3 : runtime.fasttext;
       const size = await measure([file]);
-      const scores = rows.get(`${choice.set}|${method}`);
-      if (!scores) throw new Error(`documentation/results-v0.3.md has no row for set ${choice.set}, ${method}`);
-      return {method, family: family.label, pack: size, runtime: family, allIn: {raw: size.raw + family.raw, gzip: size.gzip + family.gzip}, scores};
+      const [scores, defaults] = [rows, boosted].map(table => table.get(`${choice.set}|${method}`));
+      if (!scores || !defaults) throw new Error(`the reports (${REPORTS.join(', ')}) lack a row for set ${choice.set}, ${method}`);
+      return {method, family: family.label, pack: size, runtime: family, allIn: {raw: size.raw + family.raw, gzip: size.gzip + family.gzip}, scores, defaults};
     };
     figures.push({
       name: pack.name, languages: [...pack.languages].sort(), kind: pack.kind,
@@ -172,7 +184,7 @@ export async function cardBlocks() {
       const cell = (value, side) => `<td class="table-cell lid-num"${better === side ? ' data-better' : ''}>${show(value)}${better === side ? '<span class="sr-only"> (better)</span>' : ''}</td>`;
       return `<tr class="table-row${total ? ' lid-budget-total' : ''}"><th class="table-head" scope="row">${label}</th>${cell(mine, 1)}${cell(theirs, 2)}</tr>`;
     };
-    const scoreRow = (label, key) => row(label, Number(o.scores[key]), Number(a.scores[key]), value => `${value.toFixed(2)}%`, false);
+    const scoreRow = (label, key) => row(label, Number(o.defaults[key]), Number(a.defaults[key]), value => `${value.toFixed(2)}%`, false);
     blocks[`budget:${f.name}`] = [
       `<p class="lid-pack-bytes"><span data-bytes-label>${(o.pack.raw / 1000).toFixed(1)}</span> kB <span class="lid-pack-bytes-note">pack, ${kB(o.allIn.gzip)} all-in gzipped</span></p>`,
       `<table class="table lid-budget" aria-label="${f.name} compared with ${a.family} for the same languages">`,
@@ -201,15 +213,37 @@ export async function accuracyTable() {
     `<th class="table-head" scope="row"><code>${name}</code></th>`,
     cell(languages.length), cell(o.method, false),
     cell((o.pack.raw / 1000).toFixed(1)), cell((o.allIn.raw / 1000).toFixed(1)),
-    cell(o.scores.flores), cell(o.scores.first20), cell(o.scores.massive),
+    cell(o.defaults.flores), cell(o.defaults.first20), cell(o.defaults.massive),
   ].join('')}</tr>`).join('\n');
+}
+
+/** The pack the demo opens with and the hero features: 20 languages, the size a page downloads (gzipped). */
+const FEATURED = 'major_20';
+
+/** Website head and hero: the featured pack's gzipped size and default accuracy, and the gzipped size of `full`. */
+export async function heroBlocks() {
+  const figures = Object.fromEntries((await packFigures()).map(f => [f.name, f]));
+  const top = figures[FEATURED], full = figures.full;
+  const size = bytes => `${(bytes / 1000).toFixed(1)}&nbsp;kB`;
+  const plain = bytes => `${(bytes / 1000).toFixed(1)} kB`;
+  const stat = (value, label) => `<div class="mk-stat"><span class="mk-stat-value">${value}</span><span class="mk-stat-label">${label}</span></div>`;
+  return {
+    meta: `<meta name="description" content="Language identification with pretrained fastText and Google CLD3 models, compressed into small language packs: ${top.languages.length} languages in ${plain(top.own.pack.gzip)} gzipped, all ${full.languages.length} CLD3 labels in ${plain(full.own.pack.gzip)}. Runs in Node.js, Bun and browsers, with no inference service.">`,
+    'hero-note': `<p class="lid-hero-note"><code>${FEATURED}</code> identifies ${top.languages.length} languages from a ${size(top.own.pack.gzip)} gzipped pack, ${size(top.own.allIn.gzip)} gzipped with its WebAssembly runtime. All ${full.languages.length} CLD3 labels fit in ${size(full.own.pack.gzip)} gzipped (<code>full</code>).</p>`,
+    stats: [
+      stat(size(top.own.pack.gzip), `gzipped pack file for <code>${FEATURED}</code> (${top.languages.length} languages), plus its WebAssembly runtime`),
+      stat(`${top.own.defaults.first20}%`, `<code>${FEATURED}</code> top-1 on the first 20 code points of FLORES sentences, with the letter boost`),
+      stat(size(full.own.pack.gzip), `gzipped pack file for all ${full.languages.length} CLD3 labels (<code>full</code>)`),
+      stat('0', 'inference servers: it runs where your code runs'),
+    ].join('\n'),
+  };
 }
 
 /** Every generated block: file → marker name → content. */
 export async function generatedBlocks() {
   return {
     'README.md': {sizes: await sizeTable(), packs: await packsTable()},
-    'docs/index.html': {...await cardBlocks(), accuracy: await accuracyTable()},
+    'docs/index.html': {...await heroBlocks(), ...await cardBlocks(), accuracy: await accuracyTable()},
   };
 }
 

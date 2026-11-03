@@ -4,7 +4,7 @@
  * Both models read letters statistically, so a short text can come out in a language whose alphabet it does not even
  * use: the `major_20` CLD3 pack calls the Russian word "гроза" Portuguese with CLD3's `reliable` flag set. The writing
  * system is hard evidence the model may miss. {@link letterSupport} measures it with the table of `charsets.ts`, and
- * the runtimes use it twice: the opt-in `boost` option adds `weight × support` to each candidate's model score before
+ * the runtimes use it twice: the `boost` option, on by default, adds `weight × support` to each candidate's model score before
  * ranking, and CLD3's `reliable` flag is cleared when another language of the table fits the letters better than the
  * predicted one.
  *
@@ -19,8 +19,12 @@
  * boost lifts all languages that share the evidence equally ("гроза" lifts every Cyrillic-script candidate), leaving
  * the model to decide among them. The model's ranking still decides between languages whose letters fit equally well.
  *
- * VERIFIED: weight 1 improved or kept the top-1 accuracy of all four packs on every v0.3 benchmark slice (FLORES
- * sentences, their first 20 code points, MASSIVE; `scripts/boost_eval.mjs`, 2026-11-02).
+ * Why on by default: VERIFIED: weight 1 improved or kept the top-1 accuracy of all four packs on every v0.3 benchmark
+ * slice (FLORES sentences, their first 20 code points, MASSIVE; `scripts/boost_eval.mjs`, 2026-11-02), and of both
+ * DNO-PQ CLD3 packs on every slice of their model card (`kyr0/cld3-pq-dno`), two-word starts and NTREX news included
+ * (2026-11-03). The default weights ({@link BOOST_WEIGHT} for fastText, {@link CLD3_BOOST_WEIGHT} for CLD3) were then
+ * tuned on held-out selection text, never on a benchmark or test text.
+ * `boost: false` gives the models' own scores.
  *
  * @module
  */
@@ -145,18 +149,38 @@ export function letterSupport(text: string, languages: readonly string[]): Map<s
 }
 
 /**
- * Default boost weight; `boost: true` uses it. At 1, letters that fit a language completely count as much as the
- * model's whole probability range, so a language whose alphabet explains the text outranks one whose alphabet does not.
+ * Default boost weight of the fastText runtime; `boost: true` uses it. At 1, letters that fit a language completely
+ * count as much as the model's whole probability range, so a language whose alphabet explains the text outranks one
+ * whose alphabet does not, while the model still ranks languages whose letters fit almost equally well.
  *
- * VERIFIED: on FLORES-200 dev, higher weights gained more for the large inventories (`full`, 8-code-point prefixes:
- * 52.47% at 1, 53.28% at 5) but cost `der_3` accuracy on 20-code-point prefixes (98.63% at 1, 98.53% at 2), 2026-11-02.
+ * VERIFIED: on the selection split of the DNO-PQ work (34,914 and 68,883 held-out texts, all lengths; Wikinews
+ * included; `dnp-tools/boost/tune.mjs`, 2026-11-03) weight 1 was the best tried or within noise of it for the `der_3`
+ * pack (96.58%; 2 lost 10 texts net, p = 0.02) and both fastText DNO-PQ packs (98.29% and 94.33%; 0.25 to 4 within
+ * noise, 10 significantly lower). Only the `deferi_6` pack gained from more (90.38% at 1, 90.49% at 10).
  */
 export const BOOST_WEIGHT = 1;
 
-/** The weight a `boost` option stands for: 0 when off, {@link BOOST_WEIGHT} for `true`, else the given number. */
-export function boostWeight(boost: boolean | number | undefined): number {
-  if (boost === undefined || boost === false) return 0;
-  if (boost === true) return BOOST_WEIGHT;
+/**
+ * Default boost weight of the CLD3 runtimes (packs and the npm provider); `boost: true` uses it. CLD3 returns only
+ * its top language, so the boost can only keep that answer or replace it with a language whose letters fit better;
+ * at 20 a language replaces the answer only when its letter share exceeds the answer's by more than the answer's
+ * score / 20 (at most 5 points).
+ *
+ * VERIFIED: on the selection split (corpora.py selection rows of each pack's labels, 106,753 texts for `major_20`,
+ * 400,481 for `full`; `dnp-tools/boost/tune.mjs`, 2026-11-03) accuracy rose with the weight up to 20 and then stayed
+ * flat: `major_20` 94.38% at 1, 94.57% at 20 (209 texts fixed, 2 broken); `full` 82.16% at 1, 82.54% at 20 (1,513
+ * fixed, 12 broken), with no language losing significantly; from 50 on Hindi lost 7 texts. The v0.3 CLD3 files for
+ * 3 and 6 languages gained too (57 fixed and 1 broken; 410 fixed and 23 broken).
+ */
+export const CLD3_BOOST_WEIGHT = 20;
+
+/**
+ * The weight a `boost` option stands for: `fallback` (the runtime's default weight) when absent or `true`, 0 for
+ * `false`, else the number.
+ */
+export function boostWeight(boost: boolean | number | undefined, fallback = BOOST_WEIGHT): number {
+  if (boost === undefined || boost === true) return fallback;
+  if (boost === false) return 0;
   if (typeof boost !== 'number' || !Number.isFinite(boost) || boost < 0) throw new RangeError('boost must be a boolean or a finite number >= 0');
   return boost;
 }

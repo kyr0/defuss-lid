@@ -1,5 +1,6 @@
 import {describe, expect, test} from 'vitest';
 import {CHARSETS} from '../src/charsets.js';
+import {CLD3_BOOST_WEIGHT} from '../src/cld3-pack.js';
 import {loadCld3} from '../src/cld3.js';
 import {BOOST_WEIGHT, letterSupport} from '../src/index.js';
 import * as der from '../src/packs/der_3.node.js';
@@ -64,8 +65,8 @@ describe('fastText boost', () => {
   test('adds weight × support to every label before ranking', async () => {
     const model = await der.load();
     // der_3 ranks this German prefix as Russian; its letters fit only the Latin-script labels.
-    expect(model.predict('Etwa zeh')[0]!.language).toBe('ru');
-    const raw = new Map(model.predict('Etwa zeh', {k: 3}).map(p => [p.language, p.score]));
+    expect(model.predict('Etwa zeh', {boost: false})[0]!.language).toBe('ru');
+    const raw = new Map(model.predict('Etwa zeh', {k: 3, boost: false}).map(p => [p.language, p.score]));
     const support = letterSupport('Etwa zeh', model.meta.labels);
     for (const boost of [true, 2]) {
       const weight = boost === true ? BOOST_WEIGHT : boost;
@@ -73,14 +74,15 @@ describe('fastText boost', () => {
       expect(boosted[0]!.language).toBe('de');
       for (const p of boosted) expect(p.score).toBeCloseTo(raw.get(p.language)! + weight * support.get(p.language)!, 12);
     }
-    expect(model.predict('Etwa zeh', {boost: false})).toEqual(model.predict('Etwa zeh'));
-    expect(model.predict('Etwa zeh', {boost: 0})).toEqual(model.predict('Etwa zeh'));
+    // On by default: no option is boost: true; 0 is boost: false.
+    expect(model.predict('Etwa zeh', {k: 3})).toEqual(model.predict('Etwa zeh', {k: 3, boost: true}));
+    expect(model.predict('Etwa zeh', {boost: 0})).toEqual(model.predict('Etwa zeh', {boost: false}));
   });
 
   test('threshold applies to the boosted score; invalid weights throw', async () => {
     const model = await der.load();
-    expect(model.predict('Etwa zeh', {threshold: 0.9})).toEqual([]);
-    expect(model.predict('Etwa zeh', {threshold: 0.9, boost: true})[0]!.language).toBe('de');
+    expect(model.predict('Etwa zeh', {threshold: 0.9, boost: false})).toEqual([]);
+    expect(model.predict('Etwa zeh', {threshold: 0.9})[0]!.language).toBe('de');
     for (const boost of [-1, Number.NaN, Number.POSITIVE_INFINITY, '1']) {
       expect(() => model.predict('Etwa zeh', {boost: boost as number})).toThrow(RangeError);
     }
@@ -88,11 +90,11 @@ describe('fastText boost', () => {
 });
 
 describe('CLD3 letter check', () => {
-  test('reliable is cleared when the letters do not fit the answer (major_20: "гроза" is not Portuguese)', async () => {
+  test('reliable is cleared when the letters do not fit the answer (major_20: "Kể từ" is not Hindi)', async () => {
     const pack = await major.load();
     try {
-      expect(pack.predict('гроза')).toEqual([{language: 'pt', score: expect.any(Number), reliable: false}]);
-      expect(pack.predict('Das ist ein deutscher Satz.')[0]).toMatchObject({language: 'de', reliable: true});
+      expect(pack.predict('Kể từ', {boost: false})).toEqual([{language: 'hi', score: expect.any(Number), reliable: false}]);
+      expect(pack.predict('Das ist ein deutscher Satz.', {boost: false})[0]).toMatchObject({language: 'de', reliable: true});
       expect(pack.predict('Das ist ein deutscher Satz.', {boost: true})[0]).toMatchObject({language: 'de', reliable: true});
     } finally {
       pack.dispose();
@@ -102,13 +104,16 @@ describe('CLD3 letter check', () => {
   test('boost replaces an answer whose alphabet the text does not use', async () => {
     const pack = await major.load();
     try {
-      expect(pack.predict('гроза', {boost: true})).toEqual([{language: 'ru', score: BOOST_WEIGHT, reliable: false}]);
-      expect(pack.predict('Москва', {boost: 3})).toEqual([{language: 'ru', score: 3, reliable: false}]);
+      // CLD3's default weight is its own (CLD3_BOOST_WEIGHT), not fastText's BOOST_WEIGHT.
+      expect(pack.predict('Kể từ', {boost: true})).toEqual([{language: 'vi', score: CLD3_BOOST_WEIGHT, reliable: false}]);
+      expect(pack.predict('Kể từ')).toEqual(pack.predict('Kể từ', {boost: true}));
+      expect(pack.predict('Das ist ein Haus.')).toEqual(pack.predict('Das ist ein Haus.', {boost: CLD3_BOOST_WEIGHT}));
+      expect(pack.predict('Kể từ', {boost: 3})).toEqual([{language: 'vi', score: 3, reliable: false}]);
       // The answer's own support is added to its score.
-      const [plain] = pack.predict('Das ist ein Haus.'), [boosted] = pack.predict('Das ist ein Haus.', {boost: true});
-      expect(boosted!.score).toBeCloseTo(plain!.score + 1, 6);
-      expect(pack.predict('гроза', {boost: true, threshold: 1})).toHaveLength(1);
-      expect(() => pack.predict('гроза', {boost: -1})).toThrow(RangeError);
+      const [plain] = pack.predict('Das ist ein Haus.', {boost: false}), [boosted] = pack.predict('Das ist ein Haus.');
+      expect(boosted!.score).toBeCloseTo(plain!.score + CLD3_BOOST_WEIGHT, 5);
+      expect(pack.predict('Kể từ', {boost: true, threshold: 1})).toHaveLength(1);
+      expect(() => pack.predict('Kể từ', {boost: -1})).toThrow(RangeError);
     } finally {
       pack.dispose();
     }
@@ -118,8 +123,8 @@ describe('CLD3 letter check', () => {
     const pack = await major.load();
     try {
       // Arabic letters fit ar and ur alike; Japanese explains none of them.
-      expect(pack.predict('وثائق ب')[0]!.language).toBe('ja');
-      const [arabic] = pack.predict('وثائق ب', {boost: true});
+      expect(pack.predict('خود', {boost: false})[0]!.language).toBe('ja');
+      const [arabic] = pack.predict('خود', {boost: true});
       expect(['ar', 'ur']).toContain(arabic!.language);
       expect(arabic!.reliable).toBe(false);
       // Latin letters fit 11 candidates alike, but the kana fit only Japanese: the model's answer stays.
@@ -132,9 +137,9 @@ describe('CLD3 letter check', () => {
   test('the npm provider applies the same check', async () => {
     const provider = await loadCld3();
     try {
-      expect(provider.predict('гроза')[0]).toMatchObject({language: 'mk', reliable: true});
+      expect(provider.predict('гроза', {boost: false})[0]).toMatchObject({language: 'mk', reliable: true});
       // CLD3 calls "Grüße" Kurdish; ü and ß fit German better, so the answer is not reliable.
-      expect(provider.predict('Grüße')[0]).toMatchObject({language: 'ku', reliable: false});
+      expect(provider.predict('Grüße', {boost: false})[0]).toMatchObject({language: 'ku', reliable: false});
       expect(provider.predict('гроза', {boost: true})[0]!.language).toBe('mk');
       expect(() => provider.predict('гроза', {boost: -1})).toThrow(RangeError);
     } finally {

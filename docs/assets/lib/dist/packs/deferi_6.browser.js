@@ -1,6 +1,6 @@
 import { loadModel } from '../index.js';
 import { PACKS } from './index.js';
-import '../boost-Bsc1WEV_.js';
+import '../boost-c99FlET5.js';
 import '../container-sM-fBKLB.js';
 
 const meta = PACKS.deferi_6;

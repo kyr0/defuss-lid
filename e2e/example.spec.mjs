@@ -1,6 +1,6 @@
 /**
  * examples/browser.html, the minimal no-build page, served from inside the installed package (its imports are
- * package-relative: ../dist/, ../models/v0.3/). Every model option must load and identify German.
+ * package-relative: ../dist/, ../models/). Every model option must load and identify German.
  */
 import {expect, test} from './fixtures.mjs';
 

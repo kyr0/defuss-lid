@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {describe, expect, test} from 'vitest';
 import {bucketIds, hashBytes, LidModel, loadModel} from '../src/index.js';
+import type {TypedArray} from '../src/container.js';
 import {model, tinyFastText} from './helpers/dlid.js';
 
 /** Released lid.176.ftz coefficients, repacked (byte-identical to the former models/fasttext-176.dlid). */
@@ -45,14 +46,14 @@ describe('released full model', () => {
 
   test('k-best is sorted, bounded by k and by the threshold', () => {
     // An ambiguous text keeps several labels above fastText's 1e-5 floor.
-    const top = lid.predict('la casa', {k: 5});
+    const top = lid.predict('la casa', {k: 5, boost: false});
     expect(top).toHaveLength(5);
     expect(top.map(p => p.score)).toEqual(top.map(p => p.score).sort((a, b) => b - a));
-    expect(top[0]).toEqual(lid.predict('la casa')[0]);
-    expect(lid.predict('la casa', {k: 5, threshold: 0.5}).map(p => p.language)).toEqual(['es']);
-    expect(lid.predict('la casa', {threshold: 0.9})).toEqual([]);
-    // Like fastText, labels below probability 1e-5 are never reported, even with threshold 0.
-    expect(lid.predict('Das ist ein deutscher Satz.', {k: 5}).map(p => p.language)).toEqual(['de']);
+    expect(top[0]).toEqual(lid.predict('la casa', {boost: false})[0]);
+    expect(lid.predict('la casa', {k: 5, threshold: 0.5, boost: false}).map(p => p.language)).toEqual(['es']);
+    expect(lid.predict('la casa', {threshold: 0.9, boost: false})).toEqual([]);
+    // Like fastText, labels below probability 1e-5 are never reported without the boost, even with threshold 0.
+    expect(lid.predict('Das ist ein deutscher Satz.', {k: 5, boost: false}).map(p => p.language)).toEqual(['de']);
   });
 
   test('restricting languages changes the argmax but never renormalizes', () => {
@@ -106,7 +107,7 @@ describe('released full model', () => {
   test('matches native fastText within the documented tolerance', () => {
     expect(fixtures.length).toBeGreaterThan(10);
     for (const item of fixtures) {
-      const p = lid.predict(item.text)[0]!;
+      const p = lid.predict(item.text, {boost: false})[0]!;
       expect(p.language, item.text).toBe(item.language);
       expect(Math.abs(p.score - item.score), item.text).toBeLessThan(3e-5);
       const hidden = lid.hidden(lid.features(item.text));
@@ -171,6 +172,28 @@ describe('v0.3 fastText packs', () => {
     const pruned = LidModel.fromBuffer(model('3/fasttext-native-pq-int8.dlid'));
     expect(pruned.arrays.codes!.length).toBeLessThan(exact.arrays.codes!.length);
     for (const {text} of fixtures) for (const p of pruned.predict(text, {k: 10})) expect(exact.meta.labels).toContain(p.language);
+  });
+
+  test('bucket ids stored as 2-byte gaps score like 4-byte ids; invalid gaps fail at load time', () => {
+    const plain = LidModel.fromBuffer(model('der_3.dlid'));
+    const ids = plain.arrays.bucket_ids as Uint32Array;
+    const gaps = Uint16Array.from(ids, (id, i) => id - (i ? ids[i - 1]! : 0));
+    const {bucket_ids: _ids, ...arrays} = plain.arrays;
+    const {bucket_ids: _shape, ...shapes} = plain.shapes;
+    const withGaps = (data: TypedArray, extra: Record<string, TypedArray> = {}, meta = plain.meta) =>
+      new LidModel(meta, {...arrays, bucket_gaps: data, ...extra}, {...shapes, bucket_gaps: [data.length]});
+    const packed = withGaps(gaps);
+    expect(packed.arrays.bucket_ids).toEqual(ids);
+    for (const {text} of fixtures) expect(packed.predict(text, {k: 3}), text).toEqual(plain.predict(text, {k: 3}));
+    const repeated = gaps.slice();
+    repeated[1] = 0;
+    const bad = [
+      () => withGaps(repeated), // two rows for one bucket
+      () => withGaps(Uint32Array.from(gaps)), // not 2-byte gaps
+      () => withGaps(gaps, {bucket_ids: ids}), // two mappings
+      () => withGaps(gaps, {}, {...plain.meta, bucket: ids[ids.length - 1]!}), // an id outside the hash space
+    ];
+    for (const load of bad) expect(load).toThrow(/bucket mapping/);
   });
 });
 

@@ -17,6 +17,7 @@ import {readdir, readFile} from 'node:fs/promises';
 import {dirname, join, normalize} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {listLibFiles} from './docs.mjs';
+import {lockedFiles} from './lock.mjs';
 import {generatedBlocks, replaceBlock} from './sizes.mjs';
 import {collect, problems} from './snippets.mjs';
 
@@ -36,6 +37,7 @@ async function check(name, fn) {
 
 const pkg = JSON.parse(await read('package.json'));
 const lock = JSON.parse(await read('models.lock.json'));
+const locked = lockedFiles(lock);
 const readme = await read('README.md');
 const site = await read('docs/index.html');
 const guides = (await readdir(join(root, 'documentation'))).filter(name => name.endsWith('.md'));
@@ -87,11 +89,16 @@ await check('versions', async () => {
 });
 
 await check('model-urls', async () => {
+  // Every Hugging Face link to a release file names the release's pinned revision and a file it holds.
   const failures = [];
+  const releases = new Map(lock.releases.map(release => [release.repository, release]));
+  const repositories = [...releases.keys()].map(name => name.replace(/[.-]/g, '\\$&')).join('|');
+  const pattern = new RegExp(`https://huggingface\\.co/(${repositories})/(?:resolve|blob|tree)/([^/\\s'"\`<]+)(?:/([^\\s'"\`)<]+))?`, 'g');
   for (const [page, text] of Object.entries(pages)) {
-    for (const [url, revision, path] of text.matchAll(/https:\/\/huggingface\.co\/kyr0\/defuss-lid-1\.0\/resolve\/([^/\s'"`]+)\/([^\s'"`)<]+)/g)) {
-      if (revision !== lock.revision) failures.push(`${page}: ${url} is not pinned to the lock revision ${lock.revision}`);
-      if (!lock.files[path]) failures.push(`${page}: ${path} is not a released file (models.lock.json)`);
+    for (const [url, repository, revision, path] of text.matchAll(pattern)) {
+      const release = releases.get(repository);
+      if (revision !== release.revision) failures.push(`${page}: ${url} is not pinned to the lock revision ${release.revision}`);
+      if (path && !release.files[path]) failures.push(`${page}: ${path} is not a released file of ${repository} (models.lock.json)`);
     }
   }
   return failures;
@@ -112,8 +119,8 @@ await check('registry', async () => {
   const failures = [];
   const {PACKS} = await import(new URL('../dist/packs/index.js', import.meta.url).href);
   for (const pack of Object.values(PACKS)) {
-    const locked = lock.files[pack.asset.slice(lock.target.length + 1)];
-    if (!locked || locked.bytes !== pack.bytes || locked.sha256 !== pack.sha256) {
+    const file = locked[pack.asset];
+    if (!file || file.bytes !== pack.bytes || file.sha256 !== pack.sha256) {
       failures.push(`${pack.name}: registry bytes/sha256 differ from models.lock.json`);
     }
     for (const variant of ['node', 'browser']) {
@@ -126,7 +133,9 @@ await check('registry', async () => {
       if (!pkg.exports[`./packs/${pack.name}`]?.[condition]) failures.push(`package.json exports ./packs/${pack.name} lacks "${condition}"`);
     }
   }
-  if (lock.target !== 'models/v0.3' || !pkg.files.includes(lock.target)) failures.push('package.json files must ship the locked model folder');
+  for (const {target} of lock.releases) {
+    if (!pkg.files.includes(target)) failures.push(`package.json files must ship the locked model folder ${target}`);
+  }
   return failures;
 });
 

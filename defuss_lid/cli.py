@@ -91,6 +91,9 @@ def main(argv=None):
     args = build_parser().parse_args(argv)
     if args.command in ("export", "compress", "subset", "quantize-head"):
         meta, arrays = load(args.source) if str(args.source).endswith(".dlid") else read_fasttext(args.source)
+        if args.command in ("compress", "subset"):
+            # Both select rows by `bucket_ids`; Model validates the source and decodes `bucket_gaps` into them.
+            arrays = Model(meta, arrays).arrays
         if args.command == "subset":
             meta, arrays = restrict(
                 meta, arrays, args.languages.split(","), args.corpus, args.min_count, args.max_features

@@ -11,7 +11,7 @@
  * @module
  */
 import {CLD3_LAYOUT} from '../runtime/cld3-layout.js';
-import {boostWeight, checkTop1} from './boost.js';
+import {boostWeight, checkTop1, CLD3_BOOST_WEIGHT} from './boost.js';
 import type {Cld3Prediction, Cld3PredictOptions} from './cld3-pack.js';
 
 /** CLD3's 109 output labels, as the packs name them. */
@@ -53,7 +53,7 @@ export async function loadCld3({minBytes = 0, maxBytes = 10000}: {minBytes?: num
       if (k !== 1) throw new RangeError('CLD3 exposes only the top language for a single span');
       if (languages !== undefined) throw new RangeError('use a build-time CLD3 pack allowlist');
       if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) throw new RangeError('threshold must be in [0,1]');
-      const weight = boostWeight(boost);
+      const weight = boostWeight(boost, CLD3_BOOST_WEIGHT);
       if (!text.trim()) return [];
       const result = model.findLanguage(text);
       if (!result.language || result.language === 'und') return [];

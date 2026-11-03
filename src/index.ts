@@ -46,9 +46,10 @@ export interface PredictOptions {
    */
   languages?: readonly string[];
   /**
-   * Letter boost (default off): add `weight × letterSupport` to every label's score before ranking, so languages
-   * whose writing system the text's letters fit rise above those whose alphabet it does not use. `true` uses
-   * {@link BOOST_WEIGHT}; a number sets the weight. Boosted scores can exceed 1 and `threshold` applies to them.
+   * Letter boost (default on; `false` turns it off): add `weight × letterSupport` to every label's score before
+   * ranking, so languages whose writing system the text's letters fit rise above those whose alphabet it does not use.
+   * Absent or `true` uses {@link BOOST_WEIGHT}; a number sets the weight. Boosted scores can exceed 1 and `threshold`
+   * applies to them.
    */
   boost?: boolean | number;
 }
@@ -166,6 +167,31 @@ function sigmoid(z: number): number {
 const shapeIs = (shape: number[] | undefined, expected: number[]) => JSON.stringify(shape) === JSON.stringify(expected);
 
 /**
+ * The sorted bucket ids of a file that stores them as `bucket_gaps` (uint16: the first id, then each id minus the one
+ * before), decoded into the `bucket_ids` every other check and lookup reads; other files pass through unchanged.
+ *
+ * Why gaps: in a re-encoded DNO-PQ pack a bucket row takes 4 code bytes and a norm byte, so a 4-byte id is almost half
+ * of it, while the gaps between a pruned table's sorted ids stay far below 65,536 (VERIFIED: at most 5,103 in every
+ * v0.3 fastText file and fastText DNO-PQ pack). Decoding once at load keeps the binary search in `wordFeatures` as it is.
+ */
+function withBucketIds(arrays: Record<string, TypedArray>, shapes: Record<string, number[]>) {
+  const gaps = arrays.bucket_gaps;
+  if (gaps === undefined) return {arrays, shapes};
+  if (!(gaps instanceof Uint16Array) || arrays.bucket_ids !== undefined || !shapeIs(shapes.bucket_gaps, [gaps.length])) {
+    throw new Error('invalid bucket mapping');
+  }
+  const ids = new Uint32Array(gaps.length);
+  let id = 0;
+  for (let i = 0; i < gaps.length; i++) {
+    id += gaps[i]!;
+    if (id > 0xffffffff) throw new Error('invalid bucket mapping'); // would wrap; validate() checks the hash space
+    ids[i] = id;
+  }
+  const {bucket_gaps: _gaps, ...rest} = arrays, {bucket_gaps: _shape, ...restShapes} = shapes;
+  return {arrays: {...rest, bucket_ids: ids}, shapes: {...restShapes, bucket_ids: [ids.length]}};
+}
+
+/**
  * A loaded fastText language-identification model.
  *
  * Construction validates the whole file once (see {@link LidModel.validate}), so `predict` can index its arrays
@@ -184,8 +210,7 @@ export class LidModel {
     {cacheSize = 2048}: LoadOptions = {}) {
     if (!Number.isInteger(cacheSize) || cacheSize < 0) throw new RangeError('invalid cache size');
     this.meta = meta;
-    this.arrays = arrays;
-    this.shapes = shapes;
+    ({arrays: this.arrays, shapes: this.shapes} = withBucketIds(arrays, shapes));
     this.words = new Map(meta.words.map((word, i) => [word, i]));
     this.cacheSize = cacheSize;
     this.validate();
@@ -415,8 +440,8 @@ export class LidModel {
    *
    * Returns `[]` for text without words (only spaces, tabs, line breaks or NUL: fastText's separators), for text
    * without any known feature, and when no label reaches the threshold. The threshold applies to the class probability before fastText's +1e-5 score offset, exactly like
-   * fastText's `predict` (`Loss::findKBest`, `HierarchicalSoftmaxLoss::dfs`). Ties keep label order. With `boost`,
-   * ranking and threshold use the boosted score instead.
+   * fastText's `predict` (`Loss::findKBest`, `HierarchicalSoftmaxLoss::dfs`). Ties keep label order. With the boost
+   * on (the default), ranking and threshold use the boosted score instead; `boost: false` gives fastText's own result.
    *
    * @throws RangeError for k < 1, a threshold outside [0, 1], `languages` that are empty, duplicated or unknown, or
    * a negative or non-finite boost.

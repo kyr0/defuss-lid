@@ -15,6 +15,18 @@ same permutation. The JS runtime uses binary search over a Uint32Array rather
 than allocating a bucket Map. Original quantized codes, norm codes, codebooks
 and head coefficients are retained by `export`.
 
+A pack may store its bucket IDs as `bucket_gaps` instead: uint16 differences
+between successive IDs, the first counted from 0
+(`defuss_lid.runtime.bucket_gaps` writes them only when every gap fits).
+Both runtimes decode them into `bucket_ids` at load, so validation and
+lookups are unchanged. Why: in a DNO-PQ pack whose rows take 4 PQ codes and a
+norm code, a 4-byte ID is almost half of a bucket row, while the gaps of a
+pruned table stay small. VERIFIED: the largest gap in the 14 v0.3 fastText
+files and the fastText DNO-PQ packs is 5,103, and a gap-encoded `der_3` predicts exactly as the 4-byte one
+(tests/fasttext.test.ts, tests/test_runtime.py). VERIFIED: runtimes up to
+0.4.0 fail on such files instead of misreading them, the JS one with "invalid
+classifier", the Python one with a KeyError for `bucket_ids`.
+
 The importer supports supervised v12 models using hierarchical or flat softmax,
 wordNgrams=1 and uniform PQ group widths. Unsupported versions, losses and
 nonuniform PQ groups raise explicit errors. Generic pretrained model licenses

@@ -22,11 +22,12 @@
  */
 import createModule from '../runtime/cld3-glue.js';
 import {CLD3_LAYOUT as pinned} from '../runtime/cld3-layout.js';
-import {boostWeight, checkTop1} from './boost.js';
+import {boostWeight, checkTop1, CLD3_BOOST_WEIGHT} from './boost.js';
 import {type BinaryInput, type ContainerMeta, parseContainer, toBytes, type TypedArray} from './container.js';
 import type {Prediction} from './index.js';
 
 export type {BinaryInput, ContainerMeta} from './container.js';
+export {CLD3_BOOST_WEIGHT} from './boost.js';
 
 /** A CLD3 result: top-1 language, CLD3's probability and its reliability flag. */
 export interface Cld3Prediction extends Prediction {
@@ -41,13 +42,14 @@ export interface Cld3Prediction extends Prediction {
 export interface Cld3PredictOptions {
   /** CLD3 returns its top language only. */
   k?: 1;
-  /** Minimum score in [0, 1] (default 0); with `boost`, it applies to the boosted score. */
+  /** Minimum score (default 0); with the boost on (the default), it applies to the boosted score. */
   threshold?: number;
   /**
-   * Letter boost (default off): the top language's score becomes `score + weight × letterSupport`, and a pack language
-   * whose `weight × letterSupport` alone is higher replaces it (with `reliable: false`, since CLD3 never ranked it).
-   * Several such languages with the same support replace it only when its own support is 0, taking the first in label
-   * order. `true` uses `BOOST_WEIGHT`; a number sets the weight.
+   * Letter boost (default on; `false` turns it off): the top language's score becomes `score + weight × letterSupport`,
+   * and a pack language whose `weight × letterSupport` alone is higher replaces it (with `reliable: false`, since CLD3
+   * never ranked it). Several such languages with the same support replace it only when its own support is 0, taking
+   * the first in label order. Absent or `true` uses `CLD3_BOOST_WEIGHT` (20); a number sets the weight. Boosted
+   * scores can reach 1 + weight and `threshold` applies to them.
    */
   boost?: boolean | number;
 }
@@ -300,7 +302,7 @@ export async function createCld3Pack(input: BinaryInput,
       if (typeof text !== 'string') throw new TypeError('text must be a string');
       if (k !== 1 || languages !== undefined) throw new RangeError('CLD3 pack supports top-1; use a build-time language allowlist');
       if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) throw new RangeError('threshold must be in [0,1]');
-      const weight = boostWeight(boost);
+      const weight = boostWeight(boost, CLD3_BOOST_WEIGHT);
       // Same reason as the fastText runtime: allocateUTF8 would encode a lone surrogate as U+FFFD.
       for (const char of text) {
         const cp = char.codePointAt(0)!;

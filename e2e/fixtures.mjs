@@ -1,7 +1,7 @@
 /**
  * Shared Playwright fixtures.
  *
- * - Model URLs on the pinned Hugging Face revision are answered from the local, hash-verified models/v0.3/ files, and
+ * - Model URLs on the pinned Hugging Face revisions are answered from the local, hash-verified models/ files, and
  *   `cdn.jsdelivr.net/npm/defuss-lid@<version>/…` from the package under test. Why: the e2e suite must prove the code
  *   that is about to be published, before it exists on npm, and must not flake on third-party availability. The bytes
  *   are the same: models.lock.json pins the Hugging Face files by SHA-256 and `node scripts/fetch-models.mjs --live`
@@ -15,16 +15,20 @@ import {readFileSync} from 'node:fs';
 import {readFile} from 'node:fs/promises';
 import {extname, join, resolve} from 'node:path';
 import {test as base, expect} from '@playwright/test';
+import {lockedFiles} from '../scripts/lock.mjs';
 
 export const repoRoot = resolve(import.meta.dirname, '..');
 const lock = JSON.parse(readFileSync(join(repoRoot, 'models.lock.json'), 'utf8'));
+/** Pinned Hugging Face URL → package path of the local copy. */
+const byURL = new Map(Object.entries(lockedFiles(lock)).map(([path, file]) => [file.url, path]));
 const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
 
 /** Root of the package under test: the installed tarball in e2e runs, else this checkout. */
 export const packageRoot = process.env.E2E_ROOT
   ? resolve(process.env.E2E_ROOT, 'consumer/node_modules/defuss-lid')
   : repoRoot;
-export const HF_BASE = `https://huggingface.co/${lock.repository}/resolve/${lock.revision}/`;
+/** Base URL of each pinned release, by repository (`kyr0/defuss-lid-1.0`, `kyr0/cld3-pq-dno`). */
+export const HF_BASE = Object.fromEntries(lock.releases.map(r => [r.repository, `https://huggingface.co/${r.repository}/resolve/${r.revision}/`]));
 export const CDN_BASE = `https://cdn.jsdelivr.net/npm/defuss-lid@${pkg.version}/`;
 
 const TYPES = {'.js': 'text/javascript', '.json': 'application/json', '.gz': 'application/gzip'};
@@ -41,16 +45,18 @@ export const test = base.extend({
       if (response.status() >= 400) problems.push(`HTTP ${response.status()}: ${response.url()}`);
     });
     if (!process.env.E2E_LIVE) {
-      await page.route(`${HF_BASE}**`, async route => {
-        const path = decodeURIComponent(route.request().url().slice(HF_BASE.length).split('?')[0]);
-        if (!lock.files[path]) return route.fulfill({status: 404, body: 'not in models.lock.json'});
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/octet-stream',
-          headers: {'Access-Control-Allow-Origin': '*'},
-          body: await readFile(join(repoRoot, lock.target, path)),
+      for (const base of Object.values(HF_BASE)) {
+        await page.route(`${base}**`, async route => {
+          const path = byURL.get(decodeURIComponent(route.request().url().split('?')[0]));
+          if (!path) return route.fulfill({status: 404, body: 'not in models.lock.json'});
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/octet-stream',
+            headers: {'Access-Control-Allow-Origin': '*'},
+            body: await readFile(join(repoRoot, path)),
+          });
         });
-      });
+      }
     }
     await page.route(`${CDN_BASE}**`, async route => {
       const path = decodeURIComponent(route.request().url().slice(CDN_BASE.length).split('?')[0]);

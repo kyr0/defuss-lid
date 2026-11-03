@@ -8,8 +8,8 @@ import pytest
 
 import defuss_lid
 from defuss_lid.cli import build_parser, main
-from defuss_lid.format import load
-from defuss_lid.runtime import Model
+from defuss_lid.format import load, save
+from defuss_lid.runtime import Model, bucket_gaps
 
 ROOT = Path(__file__).resolve().parents[1]
 EXACT = ROOT / "models/v0.3/full/fasttext-native-exact.dlid"
@@ -85,6 +85,25 @@ def test_compress_with_explicit_options(capsys, tmp_path):
     assert report["kind"] == "pq" and report["dimension"] == 16
     meta, arrays = load(target)
     assert meta["retained_rows"] == 300 and meta["groups"] == 2 and arrays["codes"].shape == (300, 2)
+
+
+def test_compress_and_subset_read_a_pack_with_bucket_gaps(capsys, tmp_path):
+    """Both select table rows by `bucket_ids`, so a source storing `bucket_gaps` must work like its 4-byte form."""
+    meta, arrays = load(EXACT)
+    gapped = tmp_path / "gaps.dlid"
+    gaps = bucket_gaps(arrays["bucket_ids"])
+    save(gapped, meta, dict(("bucket_gaps", gaps) if k == "bucket_ids" else (k, v) for k, v in arrays.items()))
+    pq = ("--cutoff", "300", "--method", "pq", "--groups", "2", "--iterations", "2")
+    for source, target in ((EXACT, tmp_path / "ids-pq.dlid"), (gapped, tmp_path / "gaps-pq.dlid")):
+        run(capsys, "compress", source, target, *pq)
+    assert (tmp_path / "ids-pq.dlid").read_bytes() == (tmp_path / "gaps-pq.dlid").read_bytes()
+    corpus = tmp_path / "calibration.jsonl"
+    corpus.write_text(
+        '{"language": "de", "text": "Guten Morgen"}\n{"language": "en", "text": "Good morning"}\n', encoding="utf-8"
+    )
+    for source, target in ((EXACT, tmp_path / "ids-de.dlid"), (gapped, tmp_path / "gaps-de.dlid")):
+        run(capsys, "subset", source, target, "--languages", "de,en", "--corpus", corpus, "--max-features", "50")
+    assert (tmp_path / "ids-de.dlid").read_bytes() == (tmp_path / "gaps-de.dlid").read_bytes()
 
 
 def test_quantize_head_writes_v2(capsys, tmp_path):

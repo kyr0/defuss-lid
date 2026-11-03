@@ -1,5 +1,5 @@
 import { C as CLD3_LAYOUT } from './cld3-layout-D_LgBzys.js';
-import { b as boostWeight, c as checkTop1 } from './boost-Bsc1WEV_.js';
+import { b as boostWeight, c as checkTop1, C as CLD3_BOOST_WEIGHT } from './boost-c99FlET5.js';
 import { p as parseContainer, t as toBytes } from './container-sM-fBKLB.js';
 
 var Module = (function() {
@@ -1597,7 +1597,7 @@ async function createCld3Pack(input, { core, minBytes = 0, maxBytes = 1e4 } = {}
       if (typeof text !== "string") throw new TypeError("text must be a string");
       if (k !== 1 || languages !== void 0) throw new RangeError("CLD3 pack supports top-1; use a build-time language allowlist");
       if (!Number.isFinite(threshold) || threshold < 0 || threshold > 1) throw new RangeError("threshold must be in [0,1]");
-      const weight = boostWeight(boost);
+      const weight = boostWeight(boost, CLD3_BOOST_WEIGHT);
       for (const char of text) {
         const cp = char.codePointAt(0);
         if (cp >= 55296 && cp <= 57343) throw new TypeError("unpaired Unicode surrogate");
@@ -1637,4 +1637,4 @@ async function loadCld3Pack(url, { coreURL = new URL("../runtime/cld3-core.bin.g
   return createCld3Pack(model, { ...options, core });
 }
 
-export { createCld3Pack, loadCld3Pack, reconstructCld3 };
+export { CLD3_BOOST_WEIGHT, createCld3Pack, loadCld3Pack, reconstructCld3 };

@@ -8,10 +8,11 @@ import pytest
 
 from defuss_lid.compress import compress, prune
 from defuss_lid.format import load
-from defuss_lid.runtime import Model
+from defuss_lid.runtime import Model, bucket_gaps
 
 ROOT = Path(__file__).resolve().parents[1]
 EXACT = ROOT / "models/v0.3/full/fasttext-native-exact.dlid"
+DER3 = ROOT / "models/v0.3/der_3.dlid"
 
 
 @pytest.fixture(scope="module")
@@ -125,3 +126,48 @@ def test_subset_path_nodes_must_be_unsigned():
     signed = dict(arrays, path_nodes=arrays["path_nodes"].astype(np.int32))
     with pytest.raises(ValueError, match="subset paths"):
         Model(meta, signed)
+
+
+def test_bucket_ids_stored_as_gaps_score_like_ids():
+    """A pack whose bucket ids are 2-byte gaps (`bucket_gaps`) predicts exactly as with 4-byte `bucket_ids`."""
+    meta, arrays = load(DER3)
+    gaps = bucket_gaps(arrays["bucket_ids"])
+    assert gaps.dtype == np.uint16
+    packed = {k: v for k, v in arrays.items() if k != "bucket_ids"} | {"bucket_gaps": gaps}
+    plain, model = Model(meta, arrays), Model(meta, packed)
+    np.testing.assert_array_equal(model.arrays["bucket_ids"], arrays["bucket_ids"])
+    for text in ("Guten Morgen!", "The weather is nice today.", "Как у тебя дела?", "Bonjour", "a"):
+        assert model.predict(text, k=3) == plain.predict(text, k=3)
+
+
+def test_bucket_gaps_exist_only_when_every_gap_fits_two_bytes():
+    """The first id counts as a gap from 0; a larger gap leaves the ids as they are (None)."""
+    np.testing.assert_array_equal(bucket_gaps(np.array([5, 9, 65544], np.uint32)), [5, 4, 65535])
+    assert bucket_gaps(np.array([3, 70_000], np.uint32)) is None
+    assert bucket_gaps(np.array([70_000], np.uint32)) is None
+    assert len(bucket_gaps(np.zeros(0, np.uint32))) == 0
+
+
+def _gaps(arrays, dtype=np.uint16):
+    """Replace `arrays`' bucket_ids by their gaps, as `dtype`."""
+    arrays["bucket_gaps"] = bucket_gaps(arrays.pop("bucket_ids")).astype(dtype)
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        (lambda m, a: a.update(bucket_gaps=np.ones(len(a["bucket_ids"]), np.uint16)), "bucket gaps"),
+        (lambda m, a: _gaps(a, np.uint32), "bucket gaps"),
+        (lambda m, a: a.update(bucket_gaps=np.zeros(len(a.pop("bucket_ids")), np.uint16)), "sorted and unique"),
+        (lambda m, a: m.update(bucket=int(a["bucket_ids"][-1])) or _gaps(a), "sorted and unique"),
+    ],
+    ids=["two-mappings", "not-two-bytes", "repeated-id", "outside-hash-space"],
+)
+def test_invalid_bucket_gaps_are_rejected(change, message):
+    """Gaps decode to ids the usual checks then validate; a file holding both forms or wider gaps is rejected."""
+    meta, arrays = load(DER3)
+    meta = json.loads(json.dumps(meta))
+    arrays = {k: v.copy() for k, v in arrays.items()}
+    change(meta, arrays)
+    with pytest.raises(ValueError, match=message):
+        Model(meta, arrays)

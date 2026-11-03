@@ -231,3 +231,6 @@
   /* the card is the widest footer column on large screens */
   @media (min-width: 64rem) { .lid-footer-nav.mk-footer-nav { grid-template-columns: 1fr 1fr 1fr 1.6fr; } }
 }
+
+/* A sample button inside running text (the boost hint): reads as a link, keeps the line height. */
+.lid-inline-sample { display: inline; height: auto; padding: 0; font-size: inherit; vertical-align: baseline; text-decoration: underline; }

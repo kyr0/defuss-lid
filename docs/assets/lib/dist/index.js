@@ -1,5 +1,5 @@
-import { b as boostWeight, l as letterSupport } from './boost-Bsc1WEV_.js';
-export { B as BOOST_WEIGHT } from './boost-Bsc1WEV_.js';
+import { b as boostWeight, l as letterSupport } from './boost-c99FlET5.js';
+export { B as BOOST_WEIGHT } from './boost-c99FlET5.js';
 import { p as parseContainer } from './container-sM-fBKLB.js';
 
 const encoder = new TextEncoder();
@@ -47,6 +47,22 @@ function sigmoid(z) {
   return z >= 0 ? 1 / (1 + Math.exp(-z)) : Math.exp(z) / (1 + Math.exp(z));
 }
 const shapeIs = (shape, expected) => JSON.stringify(shape) === JSON.stringify(expected);
+function withBucketIds(arrays, shapes) {
+  const gaps = arrays.bucket_gaps;
+  if (gaps === void 0) return { arrays, shapes };
+  if (!(gaps instanceof Uint16Array) || arrays.bucket_ids !== void 0 || !shapeIs(shapes.bucket_gaps, [gaps.length])) {
+    throw new Error("invalid bucket mapping");
+  }
+  const ids = new Uint32Array(gaps.length);
+  let id = 0;
+  for (let i = 0; i < gaps.length; i++) {
+    id += gaps[i];
+    if (id > 4294967295) throw new Error("invalid bucket mapping");
+    ids[i] = id;
+  }
+  const { bucket_gaps: _gaps, ...rest } = arrays, { bucket_gaps: _shape, ...restShapes } = shapes;
+  return { arrays: { ...rest, bucket_ids: ids }, shapes: { ...restShapes, bucket_ids: [ids.length] } };
+}
 class LidModel {
   meta;
   arrays;
@@ -58,8 +74,7 @@ class LidModel {
   constructor(meta, arrays, shapes, { cacheSize = 2048 } = {}) {
     if (!Number.isInteger(cacheSize) || cacheSize < 0) throw new RangeError("invalid cache size");
     this.meta = meta;
-    this.arrays = arrays;
-    this.shapes = shapes;
+    ({ arrays: this.arrays, shapes: this.shapes } = withBucketIds(arrays, shapes));
     this.words = new Map(meta.words.map((word, i) => [word, i]));
     this.cacheSize = cacheSize;
     this.validate();
@@ -273,8 +288,8 @@ class LidModel {
    *
    * Returns `[]` for text without words (only spaces, tabs, line breaks or NUL: fastText's separators), for text
    * without any known feature, and when no label reaches the threshold. The threshold applies to the class probability before fastText's +1e-5 score offset, exactly like
-   * fastText's `predict` (`Loss::findKBest`, `HierarchicalSoftmaxLoss::dfs`). Ties keep label order. With `boost`,
-   * ranking and threshold use the boosted score instead.
+   * fastText's `predict` (`Loss::findKBest`, `HierarchicalSoftmaxLoss::dfs`). Ties keep label order. With the boost
+   * on (the default), ranking and threshold use the boosted score instead; `boost: false` gives fastText's own result.
    *
    * @throws RangeError for k < 1, a threshold outside [0, 1], `languages` that are empty, duplicated or unknown, or
    * a negative or non-finite boost.
