@@ -3,6 +3,7 @@
 [![CI](https://github.com/kyr0/defuss-lid/actions/workflows/verify.yml/badge.svg)](https://github.com/kyr0/defuss-lid/actions/workflows/verify.yml)
 [![npm](https://img.shields.io/npm/v/defuss-lid)](https://www.npmjs.com/package/defuss-lid)
 [![Models](https://img.shields.io/badge/%F0%9F%A4%97%20models-kyr0%2Fdefuss--lid--1.0-yellow)](https://huggingface.co/kyr0/defuss-lid-1.0)
+[![fastText DNO-PQ](https://img.shields.io/badge/%F0%9F%A4%97%20fastText-kyr0%2FfastText--pq--dno-yellow)](https://huggingface.co/kyr0/fastText-pq-dno)
 [![CLD3 DNO-PQ](https://img.shields.io/badge/%F0%9F%A4%97%20CLD3-kyr0%2Fcld3--pq--dno-yellow)](https://huggingface.co/kyr0/cld3-pq-dno)
 [![License](https://img.shields.io/badge/license-MIT%20%7C%20CC%20BY--SA%203.0%20%7C%20Apache--2.0-blue)](NOTICE.md)
 
@@ -12,13 +13,14 @@ Your text never leaves the process: a pack is a small binary file, the runtime i
 
 ## TL;DR
 
-You don't need a 900 kB model or a server to tell German from English. Pick the pack that covers your languages, `load()` it and call `predict(text)`. The four recommended packs reuse the released fastText `lid.176` and Google CLD3 coefficients (nothing was trained from scratch), keep only the outputs you need, prune input features that a separate calibration corpus never used, and quantize what remains. The two CLD3 packs are DNO-PQ packs: their dense layers were refitted on held-out text, so they make fewer errors than Google's original CLD3 at 36% to 38% of its size. On held-out FLORES sentences the 78 kB `der_3` pack is 100.00% accurate for German, English and Russian; the 130 kB `full` pack keeps all 109 CLD3 labels and scores 98.13% on the 78 FLORES languages the benchmark shares with it, against 97.81% for Google's original weights. The measured results ([v0.3](documentation/results-v0.3.md), [DNO-PQ](documentation/results-dno-pq.md)) list every trade-off.
+You don't need a 900 kB model or a server to tell German from English. Pick the pack that covers your languages, `load()` it and call `predict(text)`. The four recommended packs reuse the released fastText `lid.176` and Google CLD3 coefficients (nothing was trained from scratch), keep only the outputs you need, drop the input features they do not need, and quantize what remains. All four are DNO-PQ packs, refitted on held-out text: the fastText packs chose their rows anew and refitted their codebooks and classifier, so they make about 20% fewer errors than `lid.176` restricted to the same languages at 11% to 18% of its size; the CLD3 packs refitted their dense layers and make fewer errors than Google's original CLD3 at 36% to 38% of its size. On held-out FLORES sentences the 78 kB `der_3` pack is 100.00% accurate for German, English and Russian; the 130 kB `full` pack keeps all 109 CLD3 labels and scores 98.13% on the 78 FLORES languages the benchmark shares with it, against 97.81% for Google's original weights. The measured results ([v0.3](documentation/results-v0.3.md), [fastText DNO-PQ](documentation/results-fasttext-dno-pq.md), [CLD3 DNO-PQ](documentation/results-dno-pq.md)) list every trade-off.
 
 Features:
 - 📦 Four ready packs: `der_3` (de, en, ru), `deferi_6` (+ fr, es, it), `major_20` (20 major languages) and `full` (109 languages), from 78 to 130 kB
 - 🧮 Pure TypeScript fastText inference: n-gram hashing, product-quantized embeddings, int8 classifier, hierarchical softmax, within 3e-5 of native fastText scores
 - 🧩 CLD3 from compact packs: weights are decoded into the original cld3-asm WebAssembly, so CLD3's own feature extraction runs unchanged; the raw pack rebuilds the upstream binary byte for byte
-- CLD3 DNO-PQ (Direct Neural Optimization - Product Quantization): `major_20` and `full` make 15% to 82% fewer errors than Google's original CLD3 on the benchmark (with the default letter boost) and are 62% to 64% smaller ([report](documentation/results-dno-pq.md), [model card](https://huggingface.co/kyr0/cld3-pq-dno))
+- fastText DNO-PQ (Direct Neural Optimization - Product Quantization): `der_3` and `deferi_6` make about 20% fewer errors than `lid.176` restricted to the same languages over ten test slices and are 82% to 89% smaller ([report](documentation/results-fasttext-dno-pq.md), [model card](https://huggingface.co/kyr0/fastText-pq-dno))
+- CLD3 DNO-PQ: `major_20` and `full` make 16% to 83% fewer errors than Google's original CLD3 on the benchmark (with the default letter boost) and are 62% to 64% smaller ([report](documentation/results-dno-pq.md), [model card](https://huggingface.co/kyr0/cld3-pq-dno))
 - 🌐 Node.js, Bun and browsers: each pack has a disk loader (`node` export condition) and a fetch loader; bundlers emit the model file through `new URL(…, import.meta.url)`
 - 🔒 Verified bytes: the CLD3 core is SHA-256-checked before it is instantiated, every model file is validated before inference, and the released files are pinned by hash in `models.lock.json`
 - 🎯 Language allowlists: build-time packs for both runtimes, and `predict(text, {languages})` for any fastText model
@@ -28,14 +30,14 @@ Features:
 
 ## Quick, CDN-based setup in the browser
 
-The runtime from jsDelivr, a pack from Hugging Face ([v0.3 release](https://huggingface.co/kyr0/defuss-lid-1.0) for fastText, [kyr0/cld3-pq-dno](https://huggingface.co/kyr0/cld3-pq-dno) for CLD3):
+The runtime from jsDelivr, a pack from Hugging Face ([kyr0/fastText-pq-dno](https://huggingface.co/kyr0/fastText-pq-dno) for fastText, [kyr0/cld3-pq-dno](https://huggingface.co/kyr0/cld3-pq-dno) for CLD3):
 
 ```html browser
 <script type="module">
-  import {loadModel} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.4.0/dist/index.js';
+  import {loadModel} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.5.0/dist/index.js';
 
   // der_3: German, English and Russian in 78 kB, pinned to a release revision
-  const lid = await loadModel('https://huggingface.co/kyr0/defuss-lid-1.0/resolve/24d27e5b42d002d69fded6301607160919151370/der_3.dlid');
+  const lid = await loadModel('https://huggingface.co/kyr0/fastText-pq-dno/resolve/0e4d9d937ec3a01ea5e149ad103b9a3d12c19ddb/der_3.dlid');
   console.log(lid.predict('Guten Morgen, wie geht es dir?')[0].language); // de
 </script>
 ```
@@ -44,7 +46,7 @@ CLD3 packs work the same way and cover more scripts. They own WebAssembly memory
 
 ```html browser
 <script type="module">
-  import {loadCld3Pack} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.4.0/dist/cld3-pack.js';
+  import {loadCld3Pack} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.5.0/dist/cld3-pack.js';
 
   // 20 languages in 110 kB; the shared CLD3 core loads from next to cld3-pack.js
   const lid = await loadCld3Pack('https://huggingface.co/kyr0/cld3-pq-dno/resolve/a186ded69dae2e46b329af8568e5b2c0fa29cee5/major_20.cld3q');
@@ -110,12 +112,12 @@ Any `.dlid` file loads with `LidModel.fromBuffer`, here the deferi_6 file the pa
 import {readFileSync} from 'node:fs';
 import {LidModel} from 'defuss-lid';
 
-const file = new URL(import.meta.resolve('defuss-lid/models/v0.3/deferi_6.dlid'));
+const file = new URL(import.meta.resolve('defuss-lid/models/fastText-pq-dno/deferi_6.dlid'));
 const lid = LidModel.fromBuffer(readFileSync(file));
 const [best, second] = lid.predict('la casa', {k: 2});
-console.log(best.language, best.score.toFixed(2)); // es 1.60
-console.log(second.language); // it
-console.log(lid.predict('la casa', {languages: ['it', 'fr']})[0].language); // it
+console.log(best.language, best.score.toFixed(2)); // it 1.55
+console.log(second.language); // es
+console.log(lid.predict('la casa', {languages: ['es', 'fr']})[0].language); // es
 ```
 
 `predict(text, {k = 1, threshold = 0, languages, boost = true})` returns `[{language, score}]`, best first, and `[]` for text without words (only spaces, tabs, line breaks or NUL, the separators fastText reads), for text without known features, and when nothing reaches `threshold`.
@@ -137,12 +139,12 @@ lid.dispose();
 
 The default weight is 1 for fastText (`BOOST_WEIGHT`) and 20 for CLD3 (`CLD3_BOOST_WEIGHT`, from `defuss-lid/cld3-pack`); `boost: true` uses it, a number sets another weight, and `false` or 0 turns the boost off. Both defaults were tuned on held-out selection text, never on the benchmark: CLD3 gained up to weight 20, while higher fastText weights cost `der_3` and both fastText DNO-PQ packs ([results](documentation/results-dno-pq.md#letter-boost)). Boosted scores can exceed 1 (up to 21 for CLD3) and `threshold` applies to them, so to abstain on the model's own confidence, combine `threshold` with `boost: false`. Why on by default: the boost improved or kept the accuracy of every pack on every measured slice. CLD3 returns only its top language, so there the other languages have no model score: a language replaces the answer when its weighted support alone beats the answer's boosted score (when several tie, only if the answer's own support is 0), and the result is never `reliable`. The `reliable` flag is checked with or without the boost.
 
-`node scripts/boost_eval.mjs 0,default` measured the boost on the benchmark cohorts (fastText packs on 2026-11-02, CLD3 DNO-PQ packs at weight 20 on 2026-11-03); the figures without the boost (`boost: false`) are those of the [pack table](#packs). At weight 20 the boost adds up to 0.67 points to the CLD3 DNO-PQ packs:
+`node scripts/boost_eval.mjs 0,default` measured the boost on the benchmark cohorts (fastText DNO-PQ packs on 2026-11-04, CLD3 DNO-PQ packs at weight 20 on 2026-11-03); the figures without the boost (`boost: false`) are those of the [pack table](#packs). At weight 20 the boost adds up to 0.67 points to the CLD3 DNO-PQ packs:
 
 | Pack | FLORES sentences, `boost: false` | default (boost) | FLORES first 20 code points, `boost: false` | default (boost) | MASSIVE utterances, `boost: false` | default (boost) |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `der_3` | 100.00% | 100.00% | 98.42% | 98.55% | 98.54% | 98.63% |
-| `deferi_6` | 99.97% | 99.97% | 93.74% | 93.84% | 96.92% | 96.97% |
+| `der_3` | 100.00% | 100.00% | 98.98% | 99.04% | 99.39% | 99.44% |
+| `deferi_6` | 99.97% | 99.97% | 95.73% | 95.75% | 98.56% | 98.58% |
 | `major_20` | 99.91% | 99.94% | 94.10% | 94.37% | 97.54% | 97.66% |
 | `full` | 98.13% | 98.16% | 82.63% | 83.30% | 92.02% | 92.21% |
 
@@ -153,7 +155,7 @@ The registry `defuss-lid/packs` lists every pack without loading one:
 ```js node bun browser
 import {PACKS} from 'defuss-lid/packs';
 
-console.log(PACKS.der_3.bytes, PACKS.der_3.languages.join(',')); // 78048 en,ru,de
+console.log(PACKS.der_3.bytes, PACKS.der_3.languages.join(',')); // 77952 en,ru,de
 console.log(PACKS.major_20.kind); // cld3-pack
 ```
 
@@ -171,8 +173,8 @@ console.log(PACKS.major_20.kind); // cld3-pack
 <!-- packs:start -->
 | Pack | Languages | Method | Pack | All-in | All-in gzipped | FLORES sentences | FLORES first 20 code points | MASSIVE utterances |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `der_3` | de, en, ru | fastText native PQ + int8 | 78.0 kB | 111.4 kB | 82.6 kB | 100.00% | 98.42% | 98.54% |
-| `deferi_6` | de, en, es, fr, it, ru | fastText native PQ + int8 | 127.5 kB | 160.8 kB | 124.8 kB | 99.97% | 93.74% | 96.92% |
+| `der_3` | de, en, ru | fastText DNO-PQ | 78.0 kB | 111.3 kB | 81.8 kB | 100.00% | 98.98% | 99.39% |
+| `deferi_6` | de, en, es, fr, it, ru | fastText DNO-PQ | 127.4 kB | 160.8 kB | 122.4 kB | 99.97% | 95.73% | 98.56% |
 | `major_20` | ar, bn, de, en, es, fr, hi, id, it, ja, ko, nl, pl, pt, ru, th, tr, ur, vi, zh | CLD3 DNO-PQ | 110.6 kB | 299.3 kB | 208.2 kB | 99.91% | 94.10% | 97.54% |
 | `full` | 109 CLD3 labels | CLD3 DNO-PQ | 130.5 kB | 319.2 kB | 224.9 kB | 98.13% | 82.63% | 92.02% |
 
@@ -186,9 +188,9 @@ The same languages on the other runtime, measured in the same run but not shippe
 | `full` | fastText native PQ + int8 | 708.1 kB | 741.4 kB | 586.1 kB | 93.14% | 73.61% | 87.17% |
 <!-- packs:end -->
 
-kB = 1,000 bytes. **All-in** is what an application downloads to identify text: the pack plus its runtime, the fastText JavaScript or the CLD3 JavaScript and its WebAssembly core (see [Size](#size)); exact byte counts are in `defuss-lid/packs` (`PACKS.der_3.bytes`). Top-1 accuracy without the letter boost (`boost: false`; the default boost raises it, see [Letter boost](#letter-boost)) on held-out FLORES-200 devtest sentences (and their first 20 code points) and MASSIVE 1.1 test utterances, measured on 2026-11-02 (CLD3 DNO-PQ packs on 2026-11-03); the full pack is evaluated on the 78 FLORES and 51 MASSIVE labels it shares with the benchmarks, not on all 109. For 3 languages the fastText pack is smaller and more accurate than CLD3; for 6 languages it is a larger file than its CLD3 counterpart, yet more accurate and, with the much smaller runtime, smaller all-in. For 20 languages the CLD3 DNO-PQ pack is more accurate on all three slices and smaller all-in once gzipped; fastText is smaller all-in uncompressed. For all languages CLD3 is both smaller and more accurate. The CLD3 alternatives for 3 and 6 languages are v0.3 PQ + int8 packs, which DNO-PQ did not refit. [results-v0.3.md](documentation/results-v0.3.md) has the remaining candidates, exact-subset baselines, paired bootstrap intervals and per-language failures (pruning hurts Chinese most); [results-dno-pq.md](documentation/results-dno-pq.md) compares the DNO-PQ packs with Google's original CLD3.
+kB = 1,000 bytes. **All-in** is what an application downloads to identify text: the pack plus its runtime, the fastText JavaScript or the CLD3 JavaScript and its WebAssembly core (see [Size](#size)); exact byte counts are in `defuss-lid/packs` (`PACKS.der_3.bytes`). Top-1 accuracy without the letter boost (`boost: false`; the default boost raises it, see [Letter boost](#letter-boost)) on held-out FLORES-200 devtest sentences (and their first 20 code points) and MASSIVE 1.1 test utterances, measured on 2026-11-02 (CLD3 DNO-PQ packs on 2026-11-03, fastText DNO-PQ packs on 2026-11-04); the full pack is evaluated on the 78 FLORES and 51 MASSIVE labels it shares with the benchmarks, not on all 109. For 3 languages the fastText pack is smaller and more accurate than CLD3; for 6 languages it is a larger file than its CLD3 counterpart, yet more accurate and, with the much smaller runtime, smaller all-in. For 20 languages the CLD3 DNO-PQ pack is more accurate on all three slices and smaller all-in once gzipped; fastText is smaller all-in uncompressed. For all languages CLD3 is both smaller and more accurate. The CLD3 alternatives for 3 and 6 languages are v0.3 PQ + int8 packs, which DNO-PQ did not refit. [results-v0.3.md](documentation/results-v0.3.md) has the remaining candidates, exact-subset baselines, paired bootstrap intervals and per-language failures (pruning hurts Chinese most); [results-fasttext-dno-pq.md](documentation/results-fasttext-dno-pq.md) compares the fastText DNO-PQ packs with `lid.176`, and [results-dno-pq.md](documentation/results-dno-pq.md) the CLD3 DNO-PQ packs with Google's original CLD3.
 
-Every file of the v0.3 release, including the per-set candidates and baselines, is on Hugging Face at [kyr0/defuss-lid-1.0](https://huggingface.co/kyr0/defuss-lid-1.0), and the CLD3 DNO-PQ packs with their model card at [kyr0/cld3-pq-dno](https://huggingface.co/kyr0/cld3-pq-dno); `models.lock.json` pins both revisions and the SHA-256 of each file.
+Every file of the v0.3 release, including the per-set candidates and baselines, is on Hugging Face at [kyr0/defuss-lid-1.0](https://huggingface.co/kyr0/defuss-lid-1.0), the fastText DNO-PQ packs with their model card at [kyr0/fastText-pq-dno](https://huggingface.co/kyr0/fastText-pq-dno), and the CLD3 DNO-PQ packs at [kyr0/cld3-pq-dno](https://huggingface.co/kyr0/cld3-pq-dno); `models.lock.json` pins all three revisions and the SHA-256 of each file.
 
 ## Size
 
@@ -198,8 +200,8 @@ Every file of the v0.3 release, including the per-set candidates and baselines, 
 | `dist/index.js` (+ shared chunks) | 33.3 kB | 11.4 kB | fastText runtime: `LidModel`, `loadModel`, `letterSupport` |
 | `dist/cld3-pack.js` (+ shared chunks) | 103.1 kB | 22.7 kB | CLD3 pack runtime with the Emscripten glue |
 | `runtime/cld3-core.bin.gz` | 85.6 kB | 85.6 kB | shared CLD3 WebAssembly core, stored gzip-compressed; once per app |
-| `der_3` | 78.0 kB | 71.2 kB | 3 languages, fastText pack |
-| `deferi_6` | 127.5 kB | 113.4 kB | 6 languages, fastText pack |
+| `der_3` | 78.0 kB | 70.5 kB | 3 languages, fastText pack |
+| `deferi_6` | 127.4 kB | 111.0 kB | 6 languages, fastText pack |
 | `major_20` | 110.6 kB | 99.9 kB | 20 languages, CLD3 pack |
 | `full` | 130.5 kB | 116.6 kB | 109 languages, CLD3 pack |
 <!-- sizes:end -->
@@ -256,7 +258,7 @@ If you use defuss-lid in research or want to reference it, cite it as:
   affiliation  = {Independent Researcher},
   title        = {defuss-lid: compressed pretrained language identification packs with a portable runtime},
   year         = {2026},
-  version      = {0.4.0},
+  version      = {0.5.0},
   howpublished = {\url{https://github.com/kyr0/defuss-lid}},
   note         = {Models: \url{https://huggingface.co/kyr0/defuss-lid-1.0}}
 }

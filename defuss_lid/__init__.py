@@ -10,4 +10,4 @@ VERIFIED: __version__ equals package.json and pyproject.toml (scripts/verify.mjs
 from .runtime import Model
 
 __all__ = ["Model"]
-__version__ = "0.4.0"
+__version__ = "0.5.0"

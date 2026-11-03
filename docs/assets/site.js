@@ -80,15 +80,15 @@ for (const button of document.querySelectorAll('.mk-code-block-copy')) {
 }
 
 // ---- live demo --------------------------------------------------------------------------------------------------------
-// Each pack from its pinned Hugging Face release (models.lock.json): fastText from the v0.3 release, CLD3 DNO-PQ from
-// kyr0/cld3-pq-dno. The e2e suite checks every URL against the lock.
-const V03 = 'kyr0/defuss-lid-1.0/{kind}/24d27e5b42d002d69fded6301607160919151370/';
-const DNO = 'kyr0/cld3-pq-dno/{kind}/a186ded69dae2e46b329af8568e5b2c0fa29cee5/';
+// Each pack from its pinned Hugging Face release (models.lock.json): the fastText DNO-PQ packs from
+// kyr0/fastText-pq-dno, the CLD3 DNO-PQ packs from kyr0/cld3-pq-dno. The e2e suite checks every URL against the lock.
+const FASTTEXT = 'kyr0/fastText-pq-dno/{kind}/0e4d9d937ec3a01ea5e149ad103b9a3d12c19ddb/';
+const CLD3 = 'kyr0/cld3-pq-dno/{kind}/a186ded69dae2e46b329af8568e5b2c0fa29cee5/';
 const MODELS = {
-  der_3: {file: 'der_3.dlid', release: V03},
-  deferi_6: {file: 'deferi_6.dlid', release: V03},
-  major_20: {file: 'major_20.cld3q', release: DNO, cld3: true},
-  full: {file: 'full.cld3q', release: DNO, cld3: true},
+  der_3: {file: 'der_3.dlid', release: FASTTEXT},
+  deferi_6: {file: 'deferi_6.dlid', release: FASTTEXT},
+  major_20: {file: 'major_20.cld3q', release: CLD3, cld3: true},
+  full: {file: 'full.cld3q', release: CLD3, cld3: true},
 };
 const hf = ({file, release}, kind) => `https://huggingface.co/${release.replace('{kind}', kind)}${file}`;
 

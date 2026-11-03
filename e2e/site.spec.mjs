@@ -5,7 +5,7 @@
  * console error, page error, failed request or HTTP >= 400, so every test here also proves the page loads cleanly.
  * Facts on the page are checked against their sources, not against copies: pack bytes and labels against the runtime
  * registry the page itself ships (assets/lib/dist/packs/index.js) and models.lock.json, the accuracy figures against
- * documentation/results-v0.3.md and documentation/results-dno-pq.md. scripts/verify.mjs separately checks every generated block against a recomputation.
+ * documentation/results-v0.3.md, documentation/results-dno-pq.md and documentation/results-fasttext-dno-pq.md. scripts/verify.mjs separately checks every generated block against a recomputation.
  */
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
@@ -13,7 +13,7 @@ import {pathToFileURL} from 'node:url';
 import {lockedFiles} from '../scripts/lock.mjs';
 import {CDN_BASE, HF_BASE, expect, repoRoot, test} from './fixtures.mjs';
 
-const report = ['results-v0.3.md', 'results-dno-pq.md'].map(name => readFileSync(join(repoRoot, 'documentation', name), 'utf8')).join('\n');
+const report = ['results-v0.3.md', 'results-dno-pq.md', 'results-fasttext-dno-pq.md'].map(name => readFileSync(join(repoRoot, 'documentation', name), 'utf8')).join('\n');
 const readme = readFileSync(join(repoRoot, 'README.md'), 'utf8');
 const locked = lockedFiles(JSON.parse(readFileSync(join(repoRoot, 'models.lock.json'), 'utf8')));
 const html = readFileSync(join(repoRoot, 'docs/index.html'), 'utf8');
@@ -203,7 +203,8 @@ test('demo: typing predicts (debounced), blank text abstains, samples fill the t
   await expect(page.locator('#demo-status')).toHaveText('Ready');
   await text.fill('Завтра вранці ми зустрінемося в кав’ярні біля вокзалу.');
   await expect(rows.first()).toHaveAttribute('data-language', 'ru');
-  await expect(page.locator('#demo-file')).toHaveAttribute('href', /\/blob\/24d27e5b42d002d69fded6301607160919151370\/der_3\.dlid$/);
+  // the file link names the pinned revision of the pack's release (models.lock.json)
+  await expect(page.locator('#demo-file')).toHaveAttribute('href', `${HF_BASE['kyr0/fastText-pq-dno'].replace('/resolve/', '/blob/')}der_3.dlid`);
 });
 
 test('packs: cards match the runtime registry and models.lock.json', async ({page}) => {
@@ -287,7 +288,8 @@ test('accuracy and coverage: one row per shipped pack (report + registry), four 
   }
   expect(Number(await page.locator('.lid-coverage-note [data-fact="tests"]').textContent())).toBeGreaterThan(0);
   await expect(page.getByRole('link', {name: /Read the full v0\.3 report/})).toHaveAttribute('href', 'https://github.com/kyr0/defuss-lid/blob/main/documentation/results-v0.3.md');
-  await expect(page.getByRole('link', {name: /Read the DNO-PQ report/})).toHaveAttribute('href', 'https://github.com/kyr0/defuss-lid/blob/main/documentation/results-dno-pq.md');
+  await expect(page.getByRole('link', {name: /Read the CLD3 DNO-PQ report/})).toHaveAttribute('href', 'https://github.com/kyr0/defuss-lid/blob/main/documentation/results-dno-pq.md');
+  await expect(page.getByRole('link', {name: /Read the fastText DNO-PQ report/})).toHaveAttribute('href', 'https://github.com/kyr0/defuss-lid/blob/main/documentation/results-fasttext-dno-pq.md');
 });
 
 test('use it: snippet contract, tabs and copy buttons', async ({page, browserName, context}) => {
@@ -308,7 +310,7 @@ test('use it: snippet contract, tabs and copy buttons', async ({page, browserNam
     }
   }
   expect(source.join('\n')).toContain(`${CDN_BASE}dist/index.js`);
-  expect(source.join('\n')).toContain(`${HF_BASE['kyr0/defuss-lid-1.0']}der_3.dlid`);
+  expect(source.join('\n')).toContain(`${HF_BASE['kyr0/fastText-pq-dno']}der_3.dlid`);
 
   // runtime tabs (defuss-shadcn Tabs)
   for (const [tab, panel] of [['Bun', '#use-bun'], ['Bundler', '#use-bundler'], ['No build', '#use-cdn'], ['Node.js', '#use-node']]) {
@@ -338,6 +340,8 @@ test('footer: licenses, links and author', async ({page}) => {
   for (const href of [
     'https://github.com/kyr0/defuss-lid',
     'https://huggingface.co/kyr0/defuss-lid-1.0',
+    'https://huggingface.co/kyr0/fastText-pq-dno',
+    'https://huggingface.co/kyr0/cld3-pq-dno',
     'https://www.npmjs.com/package/defuss-lid',
     'https://github.com/kyr0/defuss-lid/tree/main/documentation',
     'https://github.com/kyr0/defuss-lid/blob/main/NOTICE.md',

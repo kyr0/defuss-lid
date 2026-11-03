@@ -64,19 +64,19 @@ describe('letterSupport', () => {
 describe('fastText boost', () => {
   test('adds weight × support to every label before ranking', async () => {
     const model = await der.load();
-    // der_3 ranks this German prefix as Russian; its letters fit only the Latin-script labels.
-    expect(model.predict('Etwa zeh', {boost: false})[0]!.language).toBe('ru');
-    const raw = new Map(model.predict('Etwa zeh', {k: 3, boost: false}).map(p => [p.language, p.score]));
-    const support = letterSupport('Etwa zeh', model.meta.labels);
+    // der_3 ranks the romanized Russian "Davaj" as Russian; its letters fit only the Latin-script labels.
+    expect(model.predict('Davaj', {boost: false})[0]!.language).toBe('ru');
+    const raw = new Map(model.predict('Davaj', {k: 3, boost: false}).map(p => [p.language, p.score]));
+    const support = letterSupport('Davaj', model.meta.labels);
     for (const boost of [true, 2]) {
       const weight = boost === true ? BOOST_WEIGHT : boost;
-      const boosted = model.predict('Etwa zeh', {k: 3, boost});
-      expect(boosted[0]!.language).toBe('de');
+      const boosted = model.predict('Davaj', {k: 3, boost});
+      expect(boosted[0]!.language).toBe('en');
       for (const p of boosted) expect(p.score).toBeCloseTo(raw.get(p.language)! + weight * support.get(p.language)!, 12);
     }
     // On by default: no option is boost: true; 0 is boost: false.
-    expect(model.predict('Etwa zeh', {k: 3})).toEqual(model.predict('Etwa zeh', {k: 3, boost: true}));
-    expect(model.predict('Etwa zeh', {boost: 0})).toEqual(model.predict('Etwa zeh', {boost: false}));
+    expect(model.predict('Davaj', {k: 3})).toEqual(model.predict('Davaj', {k: 3, boost: true}));
+    expect(model.predict('Davaj', {boost: 0})).toEqual(model.predict('Davaj', {boost: false}));
   });
 
   test('threshold applies to the boosted score; invalid weights throw', async () => {

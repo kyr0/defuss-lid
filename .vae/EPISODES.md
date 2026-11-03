@@ -11,12 +11,6 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-02T09:19:42Z s=d9c6d40f FINDING scripts/package_release.py:excluded learn=none: exclusions added; not executed because it rewrites SHA256SUMS
 2026-11-02T09:19:42Z s=d9c6d40f FINDING scripts/verify_native.py learn=none: import moved after argument parsing; not run with fastText installed
 2026-11-02T09:38:51Z s=d9c6d40f FINDING README.md:156 packs paragraph learn=none: prose comparison, not mechanically checkable; the figures it summarizes are generated and verified
-2026-11-02T09:44:49Z s=d9c6d40f FAIL tests.e2e.1
-2026-11-02T09:46:43Z s=d9c6d40f DONE fp=bc52fc809e07 cov=96.3% paths=.claude/settings.json,.github/workflows/verify.yml,.oxlintrc.json,AGENTS.md(+101)
-2026-11-02T09:46:43Z s=d9c6d40f FINDING scripts/sizes.mjs:reportRows learn=test: e2e/site.spec.mjs accuracy test matches each generated row, including the 2-decimal pack kB only that table has, against results-v0.3.md
-2026-11-02T09:46:43Z s=d9c6d40f FINDING e2e/site.spec.mjs:packs budget table learn=test: passes in chromium, firefox and webkit
-2026-11-02T09:46:43Z s=d9c6d40f FINDING gate run (operational) learn=memory: .vae/MEMORY.md line 'gate runs'
-2026-11-02T09:53:55Z s=d9c6d40f DONE fp=5a594d446bc7 cov=96.3% paths=.claude/settings.json,.github/workflows/verify.yml,.oxlintrc.json,AGENTS.md(+100)
 2026-11-02T09:53:55Z s=d9c6d40f FINDING .gitignore:dist/ learn=verifier: scripts/verify.mjs site-runtime-copy now runs git check-ignore over the site files; a probe re-adding `dist/` failed with 8 findings
 2026-11-02T09:53:55Z s=d9c6d40f FINDING SHA256SUMS, scripts/package_release.py, scripts/browser_check.mjs learn=none: one-time cleanup requested by the maintainer
 2026-11-02T09:53:55Z s=d9c6d40f FINDING scripts/coverage.mjs + docs/index.html coverage block learn=verifier: `make coverage` runs scripts/coverage.mjs --check after measuring
@@ -106,3 +100,9 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-03T20:42:27Z s=b132b503 FINDING src/boost.ts BOOST_WEIGHT, CLD3_BOOST_WEIGHT; src/cld3-pack.ts:303; src/cld3.ts:56 learn=test: tests/boost.test.ts covers both defaults and the explicit-weight path
 2026-11-03T21:49:12Z s=b132b503 DONE fp=e25b30c3f1bc cov=97.0% paths=.github/workflows/verify.yml,ARCH.md,Makefile,README.md(+44)
 2026-11-03T21:49:12Z s=b132b503 FINDING models.lock.json kyr0/cld3-pq-dno; README.md:50; docs/assets/site.js:86; docs/index.html:199,704; documentation/results-dno-pq.md learn=verifier: fetch-models --live and the e2e lock/URL checks already catch a revision or hash drift
+2026-11-03T23:23:40Z s=b132b503 FAIL tests.e2e.1
+2026-11-03T23:35:54Z s=b132b503 DONE fp=8f2b9140fe55 cov=97.0% paths=.github/workflows/verify.yml,ARCH.md,Makefile,NOTICE.md(+51)
+2026-11-03T23:35:54Z s=b132b503 FINDING NOTICE.md (B evidence) learn=none: a licence/provenance statement against the data a pack was fitted on has no mechanical check
+2026-11-03T23:35:54Z s=b132b503 FINDING README.md:22 feature list (B evidence) learn=none: hand-written range in prose; the tables it summarizes are checked, the summary is not
+2026-11-03T23:35:54Z s=b132b503 FINDING docs/index.html footer: Pinned revision 3938e50 (P precision) learn=none: the e2e footer test checks hrefs, not labels
+2026-11-03T23:35:54Z s=b132b503 FINDING e2e/site.spec.mjs demo test; README.md:157; docs/index.html restrict example; tests/boost.test.ts learn=test: the e2e snippet runner and site tests caught every stale output; the demo link now reads the lock

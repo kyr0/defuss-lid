@@ -117,7 +117,7 @@
     <div class="lid-hero-wrap">
       <section class="mk-hero" data-variant="glow" aria-labelledby="hero-title">
         <div class="mk-hero-copy">
-          <a class="mk-hero-pill" href="#boost"><span class="badge" data-variant="default" data-size="sm">v0.4.0</span><span>New: a letter boost for short text</span><svg class="lid-icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          <a class="mk-hero-pill" href="#boost"><span class="badge" data-variant="default" data-size="sm">v0.5.0</span><span>New: fastText DNO-PQ packs, 20% fewer errors</span><svg class="lid-icon" aria-hidden="true"><use href="#i-arrow"/></svg></a>
           <h1 class="mk-hero-title" id="hero-title">Extremely lightweight language identification</h1>
           <p class="mk-hero-desc">defuss-lid tells you which language a text is written in - even if it&apos;s very short. Pretrained fastText and Google CLD3 models are PQ-compressed into small language packs, and run in the browser, Bun or Node.js. Models are optimized by distinct character boosting and Direct Neural Optimization - Product Quantization (DNO-PQ).</p>
           <ul class="lid-runtimes" aria-label="Runs in">
@@ -243,55 +243,55 @@
       </header>
 
       <div class="lid-packs">
-        <article class="card lid-pack" data-pack="der_3" data-bytes="78048" aria-labelledby="pack-der_3">
+        <article class="card lid-pack" data-pack="der_3" data-bytes="77952" aria-labelledby="pack-der_3">
           <div class="card-header">
             <div class="lid-pack-head"><h3 class="card-title" id="pack-der_3"><code>der_3</code></h3><span class="badge" data-variant="secondary">fastText</span></div>
-            <p class="card-description">German, English and Russian. The smallest recommended pack, and the most accurate on short text in its set.</p>
+            <p class="card-description">German, English and Russian. The smallest recommended pack, and the most accurate on short text in its set. A DNO-PQ pack: fewer errors than fastText&apos;s lid.176 restricted to the same languages.</p>
           </div>
           <div class="card-content">
             <!-- budget:der_3:start -->
-            <p class="lid-pack-bytes"><span data-bytes-label>78.0</span> kB <span class="lid-pack-bytes-note">pack, 82.6 kB all-in gzipped</span></p>
+            <p class="lid-pack-bytes"><span data-bytes-label>78.0</span> kB <span class="lid-pack-bytes-note">pack, 81.8 kB all-in gzipped</span></p>
             <table class="table lid-budget" aria-label="der_3 compared with CLD3 for the same languages">
             <thead><tr class="table-row"><th class="table-head" scope="col"><span class="sr-only">Figure</span></th><th class="table-head lid-num" scope="col">der_3</th><th class="table-head lid-num" scope="col">CLD3 alternative</th></tr></thead>
             <tbody>
-            <tr class="table-row lid-budget-total"><th class="table-head" scope="row">All-in, gzipped</th><td class="table-cell lid-num" data-better>82.6 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">204.2 kB</td></tr>
+            <tr class="table-row lid-budget-total"><th class="table-head" scope="row">All-in, gzipped</th><td class="table-cell lid-num" data-better>81.8 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">204.2 kB</td></tr>
             <tr class="table-row"><th class="table-head" scope="row">Pack</th><td class="table-cell lid-num" data-better>78.0 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">106.6 kB</td></tr>
             <tr class="table-row"><th class="table-head" scope="row">Runtime</th><td class="table-cell lid-num" data-better>33.3 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">188.7 kB</td></tr>
-            <tr class="table-row"><th class="table-head" scope="row">All-in</th><td class="table-cell lid-num" data-better>111.4 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">295.3 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">All-in</th><td class="table-cell lid-num" data-better>111.3 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">295.3 kB</td></tr>
             <tr class="table-row"><th class="table-head" scope="row">FLORES sentences</th><td class="table-cell lid-num" data-better>100.00%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">99.97%</td></tr>
-            <tr class="table-row"><th class="table-head" scope="row">First 20 code points</th><td class="table-cell lid-num" data-better>98.55%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">95.92%</td></tr>
-            <tr class="table-row"><th class="table-head" scope="row">MASSIVE utterances</th><td class="table-cell lid-num" data-better>98.63%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">97.50%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">First 20 code points</th><td class="table-cell lid-num" data-better>99.04%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">95.92%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">MASSIVE utterances</th><td class="table-cell lid-num" data-better>99.44%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">97.50%</td></tr>
             </tbody>
             </table>
             <!-- budget:der_3:end -->
-            <p class="lid-pack-meta">3 languages · native PQ + int8</p>
+            <p class="lid-pack-meta">3 languages · DNO-PQ</p>
             <ul class="lid-langs" aria-label="Languages of der_3"><li class="badge" data-variant="outline" data-size="sm">de</li><li class="badge" data-variant="outline" data-size="sm">en</li><li class="badge" data-variant="outline" data-size="sm">ru</li></ul>
           </div>
           <div class="card-footer"><code class="lid-import">defuss-lid/packs/der_3</code></div>
         </article>
 
-        <article class="card lid-pack" data-pack="deferi_6" data-bytes="127488" aria-labelledby="pack-deferi_6">
+        <article class="card lid-pack" data-pack="deferi_6" data-bytes="127424" aria-labelledby="pack-deferi_6">
           <div class="card-header">
             <div class="lid-pack-head"><h3 class="card-title" id="pack-deferi_6"><code>deferi_6</code></h3><span class="badge" data-variant="secondary">fastText</span></div>
-            <p class="card-description">Six major European languages: German, English, French, Spanish, Russian and Italian. A larger file than its CLD3 counterpart, yet more accurate, and with the smaller runtime smaller all-in.</p>
+            <p class="card-description">Six major European languages: German, English, French, Spanish, Russian and Italian. A DNO-PQ pack with fewer errors than fastText&apos;s lid.176 restricted to the same languages; a larger file than its CLD3 counterpart, yet more accurate, and with the smaller runtime smaller all-in.</p>
           </div>
           <div class="card-content">
             <!-- budget:deferi_6:start -->
-            <p class="lid-pack-bytes"><span data-bytes-label>127.5</span> kB <span class="lid-pack-bytes-note">pack, 124.8 kB all-in gzipped</span></p>
+            <p class="lid-pack-bytes"><span data-bytes-label>127.4</span> kB <span class="lid-pack-bytes-note">pack, 122.4 kB all-in gzipped</span></p>
             <table class="table lid-budget" aria-label="deferi_6 compared with CLD3 for the same languages">
             <thead><tr class="table-row"><th class="table-head" scope="col"><span class="sr-only">Figure</span></th><th class="table-head lid-num" scope="col">deferi_6</th><th class="table-head lid-num" scope="col">CLD3 alternative</th></tr></thead>
             <tbody>
-            <tr class="table-row lid-budget-total"><th class="table-head" scope="row">All-in, gzipped</th><td class="table-cell lid-num" data-better>124.8 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">204.8 kB</td></tr>
-            <tr class="table-row"><th class="table-head" scope="row">Pack</th><td class="table-cell lid-num">127.5 kB</td><td class="table-cell lid-num" data-better>107.3 kB<span class="sr-only"> (better)</span></td></tr>
+            <tr class="table-row lid-budget-total"><th class="table-head" scope="row">All-in, gzipped</th><td class="table-cell lid-num" data-better>122.4 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">204.8 kB</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">Pack</th><td class="table-cell lid-num">127.4 kB</td><td class="table-cell lid-num" data-better>107.3 kB<span class="sr-only"> (better)</span></td></tr>
             <tr class="table-row"><th class="table-head" scope="row">Runtime</th><td class="table-cell lid-num" data-better>33.3 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">188.7 kB</td></tr>
             <tr class="table-row"><th class="table-head" scope="row">All-in</th><td class="table-cell lid-num" data-better>160.8 kB<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">296.0 kB</td></tr>
             <tr class="table-row"><th class="table-head" scope="row">FLORES sentences</th><td class="table-cell lid-num" data-better>99.97%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">99.93%</td></tr>
-            <tr class="table-row"><th class="table-head" scope="row">First 20 code points</th><td class="table-cell lid-num" data-better>93.84%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">90.22%</td></tr>
-            <tr class="table-row"><th class="table-head" scope="row">MASSIVE utterances</th><td class="table-cell lid-num" data-better>96.97%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">95.17%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">First 20 code points</th><td class="table-cell lid-num" data-better>95.75%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">90.22%</td></tr>
+            <tr class="table-row"><th class="table-head" scope="row">MASSIVE utterances</th><td class="table-cell lid-num" data-better>98.58%<span class="sr-only"> (better)</span></td><td class="table-cell lid-num">95.17%</td></tr>
             </tbody>
             </table>
             <!-- budget:deferi_6:end -->
-            <p class="lid-pack-meta">6 languages · native PQ + int8</p>
+            <p class="lid-pack-meta">6 languages · DNO-PQ</p>
             <ul class="lid-langs" aria-label="Languages of deferi_6"><li class="badge" data-variant="outline" data-size="sm">de</li><li class="badge" data-variant="outline" data-size="sm">en</li><li class="badge" data-variant="outline" data-size="sm">fr</li><li class="badge" data-variant="outline" data-size="sm">es</li><li class="badge" data-variant="outline" data-size="sm">ru</li><li class="badge" data-variant="outline" data-size="sm">it</li></ul>
           </div>
           <div class="card-footer"><code class="lid-import">defuss-lid/packs/deferi_6</code></div>
@@ -318,7 +318,7 @@
             </tbody>
             </table>
             <!-- budget:major_20:end -->
-            <p class="lid-pack-meta">20 languages · PQ + int8</p>
+            <p class="lid-pack-meta">20 languages · DNO-PQ</p>
             <ul class="lid-langs" aria-label="Languages of major_20"><li class="badge" data-variant="outline" data-size="sm">en</li><li class="badge" data-variant="outline" data-size="sm">de</li><li class="badge" data-variant="outline" data-size="sm">fr</li><li class="badge" data-variant="outline" data-size="sm">it</li><li class="badge" data-variant="outline" data-size="sm">ru</li><li class="badge" data-variant="outline" data-size="sm">id</li><li class="badge" data-variant="outline" data-size="sm">es</li><li class="badge" data-variant="outline" data-size="sm">pt</li><li class="badge" data-variant="outline" data-size="sm">nl</li><li class="badge" data-variant="outline" data-size="sm">ur</li><li class="badge" data-variant="outline" data-size="sm">vi</li><li class="badge" data-variant="outline" data-size="sm">th</li><li class="badge" data-variant="outline" data-size="sm">zh</li><li class="badge" data-variant="outline" data-size="sm">ja</li><li class="badge" data-variant="outline" data-size="sm">pl</li><li class="badge" data-variant="outline" data-size="sm">tr</li><li class="badge" data-variant="outline" data-size="sm">ar</li><li class="badge" data-variant="outline" data-size="sm">ko</li><li class="badge" data-variant="outline" data-size="sm">bn</li><li class="badge" data-variant="outline" data-size="sm">hi</li></ul>
           </div>
           <div class="card-footer"><code class="lid-import">defuss-lid/packs/major_20</code></div>
@@ -345,7 +345,7 @@
             </tbody>
             </table>
             <!-- budget:full:end -->
-            <p class="lid-pack-meta">109 labels · PQ + int8</p>
+            <p class="lid-pack-meta">109 labels · DNO-PQ</p>
             <details class="collapsible lid-langs-all" data-variant="ghost" data-size="sm" data-marker="arrow">
               <summary class="collapsible-trigger">Show all 109 labels</summary>
               <div class="collapsible-content">
@@ -398,14 +398,14 @@
         <div class="lid-how-block" id="boost">
           <h3 class="lid-how-title">Letters as evidence</h3>
           <p class="lid-how-desc">Both models read letters statistically, so a short text can come out in a language whose alphabet it does not use: <code>major_20</code> calls the Vietnamese «Kể từ» («since») Hindi. A table of 193 lines, one per language, lists the letters that set it apart (<code>de äöüß</code>, <code>ru аийцщъыьэюяё</code>); every other letter counts for all languages of its script. <code>letterSupport</code> turns that into the share of a text's letters each alphabet explains, <code>predict(text)</code> adds it, times a weight tuned on held-out text (1 for fastText, 20 for CLD3), to the model scores by default (<code>boost: false</code> turns it off), and CLD3's <em>reliable</em> flag is cleared when another language fits the letters better.</p>
-          <p class="lid-table-note"><span id="boost-caption">Top-1 accuracy without and with the letter boost at each runtime's default weight (1 for fastText, 20 for CLD3), measured on 2026-11-02 (CLD3 DNO-PQ packs on 2026-11-03).</span> <span class="lid-scroll-hint">Scroll the table sideways for all columns.</span></p>
+          <p class="lid-table-note"><span id="boost-caption">Top-1 accuracy without and with the letter boost at each runtime's default weight (1 for fastText, 20 for CLD3), measured on 2026-11-03 (CLD3 DNO-PQ packs) and 2026-11-04 (fastText DNO-PQ packs).</span> <span class="lid-scroll-hint">Scroll the table sideways for all columns.</span></p>
           <div class="card lid-table-card">
             <div class="table-container lid-table-scroll" tabindex="0" role="region" aria-labelledby="boost-caption">
               <table class="table" id="boost-table" aria-labelledby="boost-caption">
                 <thead><tr class="table-row"><th class="table-head" scope="col">Pack</th><th class="table-head lid-num" scope="col">FLORES sentences, boost off</th><th class="table-head lid-num" scope="col">default (boost)</th><th class="table-head lid-num" scope="col">First 20 code points, boost off</th><th class="table-head lid-num" scope="col">default (boost)</th><th class="table-head lid-num" scope="col">MASSIVE utterances, boost off</th><th class="table-head lid-num" scope="col">default (boost)</th></tr></thead>
                 <tbody>
-                  <tr class="table-row" data-pack="der_3"><th class="table-cell" scope="row"><code>der_3</code></th><td class="table-cell lid-num">100.00%</td><td class="table-cell lid-num">100.00%</td><td class="table-cell lid-num">98.42%</td><td class="table-cell lid-num">98.55%</td><td class="table-cell lid-num">98.54%</td><td class="table-cell lid-num">98.63%</td></tr>
-                  <tr class="table-row" data-pack="deferi_6"><th class="table-cell" scope="row"><code>deferi_6</code></th><td class="table-cell lid-num">99.97%</td><td class="table-cell lid-num">99.97%</td><td class="table-cell lid-num">93.74%</td><td class="table-cell lid-num">93.84%</td><td class="table-cell lid-num">96.92%</td><td class="table-cell lid-num">96.97%</td></tr>
+                  <tr class="table-row" data-pack="der_3"><th class="table-cell" scope="row"><code>der_3</code></th><td class="table-cell lid-num">100.00%</td><td class="table-cell lid-num">100.00%</td><td class="table-cell lid-num">98.98%</td><td class="table-cell lid-num">99.04%</td><td class="table-cell lid-num">99.39%</td><td class="table-cell lid-num">99.44%</td></tr>
+                  <tr class="table-row" data-pack="deferi_6"><th class="table-cell" scope="row"><code>deferi_6</code></th><td class="table-cell lid-num">99.97%</td><td class="table-cell lid-num">99.97%</td><td class="table-cell lid-num">95.73%</td><td class="table-cell lid-num">95.75%</td><td class="table-cell lid-num">98.56%</td><td class="table-cell lid-num">98.58%</td></tr>
                   <tr class="table-row" data-pack="major_20"><th class="table-cell" scope="row"><code>major_20</code></th><td class="table-cell lid-num">99.91%</td><td class="table-cell lid-num">99.94%</td><td class="table-cell lid-num">94.10%</td><td class="table-cell lid-num">94.37%</td><td class="table-cell lid-num">97.54%</td><td class="table-cell lid-num">97.66%</td></tr>
                   <tr class="table-row" data-pack="full"><th class="table-cell" scope="row"><code>full</code></th><td class="table-cell lid-num">98.13%</td><td class="table-cell lid-num">98.16%</td><td class="table-cell lid-num">82.63%</td><td class="table-cell lid-num">83.30%</td><td class="table-cell lid-num">92.02%</td><td class="table-cell lid-num">92.21%</td></tr>
                 </tbody>
@@ -419,7 +419,7 @@
           <div class="mk-features-bento">
             <article class="mk-bento-tile" data-span="wide"><svg aria-hidden="true" class="lid-icon"><use href="#i-scissors"/></svg><h4>Output subsetting</h4><p>A pack keeps only what its languages need. For fastText these are the hierarchical-softmax decisions on the paths to the chosen labels, so each kept language keeps its original score. For CLD3 they are the chosen softmax columns.</p></article>
             <article class="mk-bento-tile" data-span="tall" data-tone="primary"><svg aria-hidden="true" class="lid-icon"><use href="#i-grid"/></svg><h4>PQ + int8</h4><p>fastText packs reuse the released 8-group norm product quantizer unchanged and store classifier rows as int8. CLD3 packs product-quantize the three large embedding tables (4 groups × 256 centroids) and store dense layers as int8 with one scale per output neuron; DNO-PQ refits those layers after quantization, so the CLD3 packs beat Google's original weights.</p></article>
-            <article class="mk-bento-tile"><svg aria-hidden="true" class="lid-icon"><use href="#i-filter"/></svg><h4>Feature pruning</h4><p>fastText subsets keep only the word and n-gram rows seen in 100 FLORES dev sentences per language. Accuracy is measured on separate FLORES devtest and MASSIVE test data; the pruning API rejects test and devtest records.</p></article>
+            <article class="mk-bento-tile"><svg aria-hidden="true" class="lid-icon"><use href="#i-filter"/></svg><h4>Feature pruning</h4><p>The fastText packs keep the lid.176 rows worth the most on held-out text, stored as 4 codes and a 2-byte bucket id each, so 74% to 78% more rows fit the same bytes. Accuracy is measured on separate FLORES devtest and MASSIVE test data that no pack was fitted on.</p></article>
             <article class="mk-bento-tile"><svg aria-hidden="true" class="lid-icon"><use href="#i-layers"/></svg><h4>Runtime once</h4><p>Pack sizes exclude the runtime. Every CLD3 pack shares one core, so a second CLD3 pack costs only its own bytes.</p></article>
           </div>
         </div>
@@ -457,7 +457,7 @@
         </div>
       </header>
 
-      <p class="lid-table-note"><span id="accuracy-caption">The four shipped packs: fastText from v0.3, CLD3 DNO-PQ. All-in adds the runtime the pack needs.</span> <span class="lid-scroll-hint">Scroll the table sideways for all columns.</span></p>
+      <p class="lid-table-note"><span id="accuracy-caption">The four shipped packs, all DNO-PQ. All-in adds the runtime the pack needs.</span> <span class="lid-scroll-hint">Scroll the table sideways for all columns.</span></p>
       <div class="card lid-table-card">
         <div class="table-container lid-table-scroll" tabindex="0" role="region" aria-labelledby="accuracy-caption">
           <table class="table" id="accuracy-table" aria-labelledby="accuracy-caption">
@@ -475,8 +475,8 @@
             </thead>
             <tbody>
               <!-- accuracy:start -->
-              <tr class="table-row" data-pack="der_3"><th class="table-head" scope="row"><code>der_3</code></th><td class="table-cell lid-num" data-cell>3</td><td class="table-cell" data-cell>fastText native PQ + int8</td><td class="table-cell lid-num" data-cell>78.0</td><td class="table-cell lid-num" data-cell>111.4</td><td class="table-cell lid-num" data-cell>100.00</td><td class="table-cell lid-num" data-cell>98.55</td><td class="table-cell lid-num" data-cell>98.63</td></tr>
-              <tr class="table-row" data-pack="deferi_6"><th class="table-head" scope="row"><code>deferi_6</code></th><td class="table-cell lid-num" data-cell>6</td><td class="table-cell" data-cell>fastText native PQ + int8</td><td class="table-cell lid-num" data-cell>127.5</td><td class="table-cell lid-num" data-cell>160.8</td><td class="table-cell lid-num" data-cell>99.97</td><td class="table-cell lid-num" data-cell>93.84</td><td class="table-cell lid-num" data-cell>96.97</td></tr>
+              <tr class="table-row" data-pack="der_3"><th class="table-head" scope="row"><code>der_3</code></th><td class="table-cell lid-num" data-cell>3</td><td class="table-cell" data-cell>fastText DNO-PQ</td><td class="table-cell lid-num" data-cell>78.0</td><td class="table-cell lid-num" data-cell>111.3</td><td class="table-cell lid-num" data-cell>100.00</td><td class="table-cell lid-num" data-cell>99.04</td><td class="table-cell lid-num" data-cell>99.44</td></tr>
+              <tr class="table-row" data-pack="deferi_6"><th class="table-head" scope="row"><code>deferi_6</code></th><td class="table-cell lid-num" data-cell>6</td><td class="table-cell" data-cell>fastText DNO-PQ</td><td class="table-cell lid-num" data-cell>127.4</td><td class="table-cell lid-num" data-cell>160.8</td><td class="table-cell lid-num" data-cell>99.97</td><td class="table-cell lid-num" data-cell>95.75</td><td class="table-cell lid-num" data-cell>98.58</td></tr>
               <tr class="table-row" data-pack="major_20"><th class="table-head" scope="row"><code>major_20</code></th><td class="table-cell lid-num" data-cell>20</td><td class="table-cell" data-cell>CLD3 DNO-PQ</td><td class="table-cell lid-num" data-cell>110.6</td><td class="table-cell lid-num" data-cell>299.3</td><td class="table-cell lid-num" data-cell>99.94</td><td class="table-cell lid-num" data-cell>94.37</td><td class="table-cell lid-num" data-cell>97.66</td></tr>
               <tr class="table-row" data-pack="full"><th class="table-head" scope="row"><code>full</code></th><td class="table-cell lid-num" data-cell>109</td><td class="table-cell" data-cell>CLD3 DNO-PQ</td><td class="table-cell lid-num" data-cell>130.5</td><td class="table-cell lid-num" data-cell>319.2</td><td class="table-cell lid-num" data-cell>98.16</td><td class="table-cell lid-num" data-cell>83.30</td><td class="table-cell lid-num" data-cell>92.21</td></tr>
               <!-- accuracy:end -->
@@ -487,7 +487,8 @@
       <div class="lid-accuracy-notes">
         <p><strong>Full</strong> means the full native label inventory, not full benchmark coverage: FLORES evaluates 78 common labels and MASSIVE 51. Small differences, such as 99.97 against 99.93 on FLORES sentences for <code>deferi_6</code> and its CLD3 alternative, are not a robust quality advantage; the report gives paired bootstrap intervals. The report also lists the configurations that are not shipped, among them the unmodified fastText <code>lid.176</code> model: 93.11% (FLORES) and 87.17% (MASSIVE) on the full set.</p>
         <a class="btn" data-variant="outline" href="https://github.com/kyr0/defuss-lid/blob/main/documentation/results-v0.3.md" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-book"/></svg>Read the full v0.3 report<span class="sr-only"> on GitHub (opens in a new tab)</span></a>
-        <a class="btn" data-variant="outline" href="https://github.com/kyr0/defuss-lid/blob/main/documentation/results-dno-pq.md" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-book"/></svg>Read the DNO-PQ report<span class="sr-only"> on GitHub (opens in a new tab)</span></a>
+        <a class="btn" data-variant="outline" href="https://github.com/kyr0/defuss-lid/blob/main/documentation/results-dno-pq.md" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-book"/></svg>Read the CLD3 DNO-PQ report<span class="sr-only"> on GitHub (opens in a new tab)</span></a>
+        <a class="btn" data-variant="outline" href="https://github.com/kyr0/defuss-lid/blob/main/documentation/results-fasttext-dno-pq.md" target="_blank" rel="noopener"><svg class="lid-icon" aria-hidden="true"><use href="#i-book"/></svg>Read the fastText DNO-PQ report<span class="sr-only"> on GitHub (opens in a new tab)</span></a>
       </div>
 
       <div class="lid-coverage-block">
@@ -585,9 +586,9 @@ console.log(lid.predict('Guten Morgen!')[0].language); // de</code></pre>
               <figure class="mk-code-block lid-code" data-variant="file">
                 <div class="mk-code-block-head"><span class="mk-code-block-file"><svg class="lid-icon" aria-hidden="true"><use href="#i-file"/></svg>index.html</span><button class="mk-code-block-copy" type="button" aria-label="Copy code"><svg class="lid-icon" aria-hidden="true"><use href="#i-copy"/></svg></button></div>
                 <pre data-numbers><code class="language-html" data-snippet="browser">&lt;script type="module"&gt;
-import {loadModel} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.4.0/dist/index.js';
+import {loadModel} from 'https://cdn.jsdelivr.net/npm/defuss-lid@0.5.0/dist/index.js';
 
-const lid = await loadModel('https://huggingface.co/kyr0/defuss-lid-1.0/resolve/24d27e5b42d002d69fded6301607160919151370/der_3.dlid');
+const lid = await loadModel('https://huggingface.co/kyr0/fastText-pq-dno/resolve/0e4d9d937ec3a01ea5e149ad103b9a3d12c19ddb/der_3.dlid');
 console.log(lid.predict('Guten Morgen!')[0].language); // de
 &lt;/script&gt;</code></pre>
                 <span class="mk-code-block-status" role="status"></span>
@@ -623,7 +624,7 @@ lid.dispose();</code></pre>
 const lid = await load();
 const allowed = {languages: ['de', 'en', 'fr']};
 console.log(lid.predict('Guten Tag!', allowed)[0].language); // de
-console.log(lid.predict('Buongiorno a tutti!', allowed)[0].language); // de
+console.log(lid.predict('Buongiorno a tutti!', allowed)[0].language); // en
 console.log(lid.predict('Buongiorno a tutti!', {...allowed, threshold: 0.5, boost: false}).length); // 0</code></pre>
               <span class="mk-code-block-status" role="status"></span>
             </figure>
@@ -693,6 +694,8 @@ lid.dispose();</code></pre>
             <li><a href="https://www.npmjs.com/package/defuss-lid" target="_blank" rel="noopener">npm package<span class="sr-only"> (opens in a new tab)</span></a></li>
             <li><a href="https://github.com/kyr0/defuss-lid/tree/main/documentation" target="_blank" rel="noopener">Documentation<span class="sr-only"> (opens in a new tab)</span></a></li>
             <li><a href="https://github.com/kyr0/defuss-lid/blob/main/documentation/results-v0.3.md" target="_blank" rel="noopener">v0.3 results report<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://github.com/kyr0/defuss-lid/blob/main/documentation/results-fasttext-dno-pq.md" target="_blank" rel="noopener">fastText DNO-PQ report<span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://github.com/kyr0/defuss-lid/blob/main/documentation/results-dno-pq.md" target="_blank" rel="noopener">CLD3 DNO-PQ report<span class="sr-only"> (opens in a new tab)</span></a></li>
           </ul>
         </div>
         <div class="mk-footer-col">
@@ -701,7 +704,9 @@ lid.dispose();</code></pre>
             <li><a href="https://huggingface.co/kyr0/defuss-lid-1.0" target="_blank" rel="noopener">kyr0/defuss-lid-1.0<span class="sr-only"> on Hugging Face (opens in a new tab)</span></a></li>
             <li><a href="https://huggingface.co/kyr0/defuss-lid-1.0/tree/24d27e5b42d002d69fded6301607160919151370" target="_blank" rel="noopener">Pinned revision <code>24d27e5</code><span class="sr-only"> (opens in a new tab)</span></a></li>
             <li><a href="https://huggingface.co/kyr0/cld3-pq-dno" target="_blank" rel="noopener">kyr0/cld3-pq-dno<span class="sr-only"> on Hugging Face (opens in a new tab)</span></a></li>
-            <li><a href="https://huggingface.co/kyr0/cld3-pq-dno/tree/a186ded69dae2e46b329af8568e5b2c0fa29cee5" target="_blank" rel="noopener">Pinned revision <code>3938e50</code><span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://huggingface.co/kyr0/cld3-pq-dno/tree/a186ded69dae2e46b329af8568e5b2c0fa29cee5" target="_blank" rel="noopener">Pinned revision <code>a186ded</code><span class="sr-only"> (opens in a new tab)</span></a></li>
+            <li><a href="https://huggingface.co/kyr0/fastText-pq-dno" target="_blank" rel="noopener">kyr0/fastText-pq-dno<span class="sr-only"> on Hugging Face (opens in a new tab)</span></a></li>
+            <li><a href="https://huggingface.co/kyr0/fastText-pq-dno/tree/0e4d9d937ec3a01ea5e149ad103b9a3d12c19ddb" target="_blank" rel="noopener">Pinned revision <code>0e4d9d9</code><span class="sr-only"> (opens in a new tab)</span></a></li>
             <li><a href="https://fasttext.cc/docs/en/language-identification.html" target="_blank" rel="noopener">fastText language identification<span class="sr-only"> (opens in a new tab)</span></a></li>
             <li><a href="https://github.com/google/cld3" target="_blank" rel="noopener">Google CLD3<span class="sr-only"> (opens in a new tab)</span></a></li>
           </ul>

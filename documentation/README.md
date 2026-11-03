@@ -7,6 +7,7 @@ Guides explain how the runtime and the tools work; reports record measurements a
 | [architecture.md](architecture.md) | guide | DLID import from fastText, feature hashing, compression methods, runtime behaviour and limits |
 | [subsets-and-cld3.md](subsets-and-cld3.md) | guide | label subsets, corpus feature pruning, CLD3 packs and their allowlist semantics |
 | [benchmark-research.md](benchmark-research.md) | guide | published language-identification benchmarks and how they compare |
+| [results-fasttext-dno-pq.md](results-fasttext-dno-pq.md) | report, 4 November 2026 | the fastText DNO-PQ packs `der_3` and `deferi_6`, the shipped fastText packs since 0.5.0, against `lid.176` and the v0.3 packs |
 | [results-dno-pq.md](results-dno-pq.md) | report, 3 November 2026 | the CLD3 DNO-PQ packs `major_20` and `full`, the shipped CLD3 packs since then, against Google's original CLD3; every pack's accuracy with the default letter boost |
 | [results-v0.3.md](results-v0.3.md) | report, 2 November 2026 | the four packs of v0.3: accuracy, sizes, baselines, paired intervals |
 | [results-v0.2.md](results-v0.2.md) | report | CLD3 compression and the five-language subsets |

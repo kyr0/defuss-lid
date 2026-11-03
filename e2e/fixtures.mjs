@@ -27,7 +27,7 @@ const pkg = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
 export const packageRoot = process.env.E2E_ROOT
   ? resolve(process.env.E2E_ROOT, 'consumer/node_modules/defuss-lid')
   : repoRoot;
-/** Base URL of each pinned release, by repository (`kyr0/defuss-lid-1.0`, `kyr0/cld3-pq-dno`). */
+/** Base URL of each pinned release, by repository (`kyr0/defuss-lid-1.0`, `kyr0/fastText-pq-dno`, `kyr0/cld3-pq-dno`). */
 export const HF_BASE = Object.fromEntries(lock.releases.map(r => [r.repository, `https://huggingface.co/${r.repository}/resolve/${r.revision}/`]));
 export const CDN_BASE = `https://cdn.jsdelivr.net/npm/defuss-lid@${pkg.version}/`;
 

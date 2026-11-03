@@ -1,6 +1,6 @@
 {
   "name": "defuss-lid",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Language identification in 78 kB: pretrained fastText and CLD3 language packs with a dependency-free runtime for Node.js, Bun and browsers.",
   "type": "module",
   "license": "(MIT AND CC-BY-SA-3.0 AND Apache-2.0)",
@@ -77,6 +77,7 @@
     "runtime",
     "models/v0.3",
     "models/cld3-pq-dno",
+    "models/fastText-pq-dno",
     "README.md",
     "LICENSE",
     "NOTICE.md",

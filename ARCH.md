@@ -12,13 +12,13 @@ defuss-lid turns released language-identification models (fastText `lid.176`, Go
 
 **Letters as evidence next to the model, not as a filter.** Both models read letters statistically, so a short text can come out in a language whose alphabet it does not use (the v0.3 `major_20` called "гроза" Portuguese, with CLD3's `reliable` flag set). `src/boost.ts` measures the share of a text's letters each language's alphabet explains, from one line of letters per language (`src/charsets.ts`). The `boost`, on by default (`boost: false` turns it off), adds a weight times that share to the model scores (1 for fastText, 20 for CLD3; each tuned on held-out selection text, `src/boost.ts`); a hard script filter instead would throw away the right answer whenever a text mixes scripts (Latin names in Japanese or Russian text), while the additive boost lets the model still decide. VERIFIED: weight 1 improved or kept the accuracy of all four packs on every benchmark slice, and CLD3's weight 20 then improved or kept every benchmark slice of the four CLD3 files measured against weight 1 (2026-11-03); at weight 1 and against the 0.3.0 build, the `reliable` check raised the precision of `major_20`'s reliable answers on FLORES-200 dev 8-code-point prefixes from 79.8% to 85.4% and cut reliable answers for languages outside the pack from 72.6% to 37.0% (2026-11-02; accuracy: `scripts/boost_eval.mjs` and README).
 
-**Models from pinned releases, not from git.** `models.lock.json` names two Hugging Face releases, the v0.3 release (kyr0/defuss-lid-1.0) and the CLD3 DNO-PQ packs (kyr0/cld3-pq-dno), each with its revision, and the SHA-256 of all 32 files; `scripts/fetch-models.mjs` downloads and verifies them, and `prepack` refuses to pack without them. A changed upstream file therefore fails setup instead of silently changing results.
+**Models from pinned releases, not from git.** `models.lock.json` names three Hugging Face releases, the v0.3 release (kyr0/defuss-lid-1.0), the fastText DNO-PQ packs (kyr0/fastText-pq-dno) and the CLD3 DNO-PQ packs (kyr0/cld3-pq-dno), each with its revision, and the SHA-256 of all 36 files; `scripts/fetch-models.mjs` downloads and verifies them, and `prepack` refuses to pack without them. A changed upstream file therefore fails setup instead of silently changing results.
 
 ## How it works
 
 ```mermaid
 flowchart LR
-  HF[(Hugging Face releases<br/>pinned revisions)] -->|fetch-models.mjs<br/>SHA-256 lock| M[models/v0.3<br/>models/cld3-pq-dno]
+  HF[(Hugging Face releases<br/>pinned revisions)] -->|fetch-models.mjs<br/>SHA-256 lock| M[models/v0.3<br/>models/fastText-pq-dno<br/>models/cld3-pq-dno]
   PY[defuss_lid/ Python tools] -->|subset · prune · quantize| M
   TS[src/*.ts] -->|pkgroll| D[dist/ ESM + d.ts]
   D --> P[npm package<br/>dist · runtime · models]
@@ -37,7 +37,7 @@ flowchart LR
 ## Operations
 
 - **Configuration and policy:** no runtime configuration; behaviour is set per call (`k`, `threshold`, `languages`, `cacheSize`, `coreURL`). Gate policy lives in `.vae/VERIFY.py`, tool versions in `mise.toml`, `bun.lock` and `uv.lock`.
-- **Deployment and scaling:** the npm package ships `dist/`, `runtime/`, `models/v0.3/` and `models/cld3-pq-dno/`; GitHub Pages serves `docs/` as-is. The runtime is per-process and stateless apart from each model's bounded feature cache.
+- **Deployment and scaling:** the npm package ships `dist/`, `runtime/`, `models/v0.3/`, `models/fastText-pq-dno/` and `models/cld3-pq-dno/`; GitHub Pages serves `docs/` as-is. The runtime is per-process and stateless apart from each model's bounded feature cache.
 - **Complexity and resources:** fastText prediction is linear in the number of characters (n-grams) times the embedding dimension, plus one classifier pass; `make bench` measured 7 to 25 µs per fixture sentence on an Apple M-series CPU. CLD3 packs reduce download size only: the full native layout (744,144 bytes of WebAssembly) is rebuilt in memory at load time.
 - **Third-party integrations:** Hugging Face (model download at setup, pinned by revision and hash; a weekly CI job checks the remote files), jsDelivr (defuss-shadcn styles for the site, pinned by version and Subresource Integrity). The runtime itself makes no network requests beyond the URLs a caller passes.
 - **Reliability:** loaders fail closed: a truncated, tampered or mismatched model or core throws before inference.

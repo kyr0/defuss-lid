@@ -5,7 +5,7 @@ import '../container-sM-fBKLB.js';
 
 const meta = PACKS.deferi_6;
 const labels = meta.languages;
-const url = new URL("../../models/v0.3/deferi_6.dlid", import.meta.url);
+const url = new URL("../../models/fastText-pq-dno/deferi_6.dlid", import.meta.url);
 function load(options) {
   return loadModel(url, options);
 }

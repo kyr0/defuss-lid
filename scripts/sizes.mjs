@@ -76,8 +76,8 @@ export async function runtimes() {
   };
 }
 
-/** The measured reports: v0.3 (fastText packs and every alternative) and the CLD3 DNO-PQ packs. */
-export const REPORTS = ['documentation/results-v0.3.md', 'documentation/results-dno-pq.md'];
+/** The measured reports: v0.3 (every alternative), the CLD3 DNO-PQ packs and the fastText DNO-PQ packs. */
+export const REPORTS = ['documentation/results-v0.3.md', 'documentation/results-dno-pq.md', 'documentation/results-fasttext-dno-pq.md'];
 
 /**
  * Rows of one table of the measured reports, keyed `set|method`: "Compression results" (`boost: false`) or "Default
@@ -105,8 +105,8 @@ export async function reportRows(heading = 'Compression results') {
  * names the pack; the report row and the alternative file follow from its set.
  */
 const CHOICES = {
-  der_3: {set: '3', method: 'fastText native PQ + int8', alt: {method: 'CLD3 PQ + int8', file: '3/cld3-pq-int8.cld3q'}},
-  deferi_6: {set: '6', method: 'fastText native PQ + int8', alt: {method: 'CLD3 PQ + int8', file: '6/cld3-pq-int8.cld3q'}},
+  der_3: {set: '3', method: 'fastText DNO-PQ', alt: {method: 'CLD3 PQ + int8', file: '3/cld3-pq-int8.cld3q'}},
+  deferi_6: {set: '6', method: 'fastText DNO-PQ', alt: {method: 'CLD3 PQ + int8', file: '6/cld3-pq-int8.cld3q'}},
   major_20: {set: '20', method: 'CLD3 DNO-PQ', alt: {method: 'fastText native PQ + int8', file: '20/fasttext-native-pq-int8.dlid'}},
   full: {set: 'full', method: 'CLD3 DNO-PQ', alt: {method: 'fastText native PQ + int8', file: 'full/fasttext-native-pq-int8.dlid'}},
 };

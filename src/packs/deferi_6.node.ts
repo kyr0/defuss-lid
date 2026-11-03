@@ -1,5 +1,5 @@
 /**
- * deferi_6 pack (de, en, fr, es, ru, it; fastText native PQ + int8): Node.js and Bun loader, reading the bundled file from disk.
+ * deferi_6 pack (de, en, fr, es, ru, it; fastText DNO-PQ): Node.js and Bun loader, reading the bundled file from disk.
  *
  * Resolved through the `node` export condition. A separate disk loader exists because Node's `fetch` cannot read
  * `file:` URLs; the browser variant fetches the same asset.
@@ -16,7 +16,7 @@ import {PACKS} from './index.js';
 export const meta = PACKS.deferi_6;
 export const labels = meta.languages;
 /** The bundled model file. A literal `new URL(…, import.meta.url)` lets bundlers find and emit the asset. */
-export const url = new URL('../../models/v0.3/deferi_6.dlid', import.meta.url);
+export const url = new URL('../../models/fastText-pq-dno/deferi_6.dlid', import.meta.url);
 
 /** Read and validate the bundled model. */
 export async function load(options?: LoadOptions): Promise<LidModel> {

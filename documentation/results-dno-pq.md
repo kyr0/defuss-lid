@@ -1,6 +1,6 @@
 # Results: the CLD3 DNO-PQ packs and the default letter boost
 
-Report of 3 November 2026. Since this date the CLD3 packs `major_20` and `full` are the DNO-PQ packs from the Hugging Face repository [kyr0/cld3-pq-dno](https://huggingface.co/kyr0/cld3-pq-dno), pinned in `models.lock.json` at revision `a186ded69dae2e46b329af8568e5b2c0fa29cee5`. The fastText packs `der_3` and `deferi_6`, the CLD3 core and every other candidate stay as in [results-v0.3.md](results-v0.3.md).
+Report of 3 November 2026. Since this date the CLD3 packs `major_20` and `full` are the DNO-PQ packs from the Hugging Face repository [kyr0/cld3-pq-dno](https://huggingface.co/kyr0/cld3-pq-dno), pinned in `models.lock.json` at revision `a186ded69dae2e46b329af8568e5b2c0fa29cee5`. The CLD3 core and every other candidate stay as in [results-v0.3.md](results-v0.3.md); since release 0.5.0 the fastText packs `der_3` and `deferi_6` are the DNO-PQ packs of [results-fasttext-dno-pq.md](results-fasttext-dno-pq.md).
 
 ## What changed
 
@@ -39,7 +39,7 @@ The model card adds two-word starts and held-out text beyond the benchmark. On t
 
 ## Default results
 
-What an application gets by default, with the letter boost on, for the four packs and for the same-language files on the other runtime that the website's pack cards compare against (from [results-v0.3.md](results-v0.3.md)). VERIFIED: measured on 2026-11-03 with `node scripts/boost_eval.mjs 0,1,default --alternatives`, at each runtime's default weight (1 for fastText, 20 for CLD3); its weight-0 column reproduced every row of both reports' "Compression results" tables. The website shows these figures; the README's pack table shows the model's own, `boost: false`.
+What an application gets by default, with the letter boost on, for the CLD3 packs, the v0.3 fastText packs (shipped until 0.4.0) and the same-language files on the other runtime that the website's pack cards compare against (from [results-v0.3.md](results-v0.3.md)). VERIFIED: measured on 2026-11-03 with `node scripts/boost_eval.mjs 0,1,default --alternatives`, at each runtime's default weight (1 for fastText, 20 for CLD3); its weight-0 column reproduced every row of both reports' "Compression results" tables. The website shows these figures; the README's pack table shows the model's own, `boost: false`.
 
 | Set | Method | Pack kB | FLORES sentences % | FLORES first 20 code points % | MASSIVE utterances % |
 | --- | --- | ---: | ---: | ---: | ---: |

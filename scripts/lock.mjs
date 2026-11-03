@@ -2,9 +2,9 @@
  * The model files pinned by models.lock.json, as one flat map from package path (`models/v0.3/der_3.dlid`) to the
  * file's bytes, SHA-256 and pinned Hugging Face URLs.
  *
- * Why a list of releases: the packs come from two Hugging Face repositories, the v0.3 release
- * (kyr0/defuss-lid-1.0: the fastText packs, the CLD3 core and every benchmark candidate) and the CLD3 DNO-PQ packs
- * (kyr0/cld3-pq-dno). Each is pinned by its own revision; one folder per release under models/ keeps a file's package
+ * Why a list of releases: the files come from three Hugging Face repositories, the v0.3 release
+ * (kyr0/defuss-lid-1.0: the CLD3 core, the earlier packs and every benchmark candidate), the fastText DNO-PQ packs
+ * (kyr0/fastText-pq-dno) and the CLD3 DNO-PQ packs (kyr0/cld3-pq-dno). Each is pinned by its own revision; one folder per release under models/ keeps a file's package
  * path unique even where both releases ship a file of the same name (`major_20.cld3q`).
  *
  * VERIFIED: `node scripts/fetch-models.mjs --live` matched all 32 files of both releases through this map on

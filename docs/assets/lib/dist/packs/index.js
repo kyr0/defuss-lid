@@ -4,18 +4,18 @@ const PACKS = {
     kind: "fasttext",
     format: "dlid",
     languages: ["en", "ru", "de"],
-    bytes: 78048,
-    sha256: "a5f7731d030a0142f1c45532903f6725da7468da69f0e9ea0428c7bbd28f24e2",
-    asset: "models/v0.3/der_3.dlid"
+    bytes: 77952,
+    sha256: "6119405a387d85683bf33b13403229d5b41759b6ded9c413850f053e0e74ff4d",
+    asset: "models/fastText-pq-dno/der_3.dlid"
   },
   deferi_6: {
     name: "deferi_6",
     kind: "fasttext",
     format: "dlid",
     languages: ["en", "ru", "de", "fr", "it", "es"],
-    bytes: 127488,
-    sha256: "b72e2ba0d099495882e781078903ade285092461ae8ef41b2a8b606fac08e2ba",
-    asset: "models/v0.3/deferi_6.dlid"
+    bytes: 127424,
+    sha256: "edd01aadbaeb4daf74877036021836fd965279991dbc770b1d6ddf0032482e81",
+    asset: "models/fastText-pq-dno/deferi_6.dlid"
   },
   major_20: {
     name: "major_20",

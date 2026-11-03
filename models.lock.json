@@ -141,6 +141,29 @@
           "sha256": "03503bf3e896d64a7276eb23172669b253e9e62b5a0b2e7b9a8bd3a46d004a24"
         }
       }
+    },
+    {
+      "repository": "kyr0/fastText-pq-dno",
+      "revision": "0e4d9d937ec3a01ea5e149ad103b9a3d12c19ddb",
+      "target": "models/fastText-pq-dno",
+      "files": {
+        "NOTICE.md": {
+          "bytes": 1514,
+          "sha256": "e7749dbdcbd290b43326761c17f8567ccbeb0bf97d1272768c50adb61d982c6c"
+        },
+        "README.md": {
+          "bytes": 11485,
+          "sha256": "c4417db1a5216dee1fbc8ab64eec6184010b7970932449f2e5b96bd12cbceecf"
+        },
+        "deferi_6.dlid": {
+          "bytes": 127424,
+          "sha256": "edd01aadbaeb4daf74877036021836fd965279991dbc770b1d6ddf0032482e81"
+        },
+        "der_3.dlid": {
+          "bytes": 77952,
+          "sha256": "6119405a387d85683bf33b13403229d5b41759b6ded9c413850f053e0e74ff4d"
+        }
+      }
     }
   ]
 }
