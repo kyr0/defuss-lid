@@ -5,15 +5,18 @@
  * bit, and the CLD3 path depends on each engine's WebAssembly, Web Crypto and DecompressionStream. scripts/e2e.mjs
  * computes reference predictions with the installed package on Node.js (parity.json); here each engine loads the same
  * files over HTTP through the installed package's browser entry points and must return the same labels with scores
- * within 1e-9.
+ * within 1e-9. The files come from their pinned Hugging Face URLs (served from the hash-verified local copies, see
+ * fixtures.mjs): the package ships only the four pack files.
  */
 import {readFileSync} from 'node:fs';
 import {join} from 'node:path';
-import {expect, test} from './fixtures.mjs';
+import {lockedFiles} from '../scripts/lock.mjs';
+import {expect, repoRoot, test} from './fixtures.mjs';
 
 test.skip(!process.env.E2E_ROOT, 'parity runs through scripts/e2e.mjs (make e2e)');
 const reference = process.env.E2E_ROOT ? JSON.parse(readFileSync(join(process.env.E2E_ROOT, 'parity.json'), 'utf8')) : {expected: {}};
 const PKG = '/consumer/node_modules/defuss-lid';
+const LOCKED = lockedFiles(JSON.parse(readFileSync(join(repoRoot, 'models.lock.json'), 'utf8')));
 
 function compare(actual, expected, label) {
   expect(actual.length, label).toBe(expected.length);
@@ -27,17 +30,18 @@ test('every released model predicts like Node.js', async ({page}) => {
   test.setTimeout(180_000);
   await page.goto('/snippets/manifest.json');
   for (const [file, expected] of Object.entries(reference.expected)) {
-    const actual = await page.evaluate(async ({file, texts, PKG}) => {
+    const actual = await page.evaluate(async ({file, url, texts, PKG}) => {
       const cld3 = file.endsWith('.cld3q');
       const {loadModel} = await import(`${PKG}/dist/index.js`);
       const {loadCld3Pack} = await import(`${PKG}/dist/cld3-pack.js`);
-      const model = cld3 ? await loadCld3Pack(`${PKG}/${file}`) : await loadModel(`${PKG}/${file}`);
+      // the CLD3 core loads from the installed package, next to cld3-pack.js
+      const model = cld3 ? await loadCld3Pack(url) : await loadModel(url);
       try {
         return texts.map(text => model.predict(text, {k: cld3 ? 1 : 3}));
       } finally {
         model.dispose?.();
       }
-    }, {file, texts: reference.texts, PKG});
+    }, {file, url: LOCKED[file].url, texts: reference.texts, PKG});
     compare(actual, expected, file);
   }
 });

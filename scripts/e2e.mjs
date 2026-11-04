@@ -48,12 +48,14 @@ await mkdir(join(output, 'snippets'), {recursive: true});
 // 1. Pack and inspect the tarball.
 const tarball = join(work, basename(run('bun', ['pm', 'pack', '--destination', work, '--quiet'], {cwd: root}).trim().split('\n').at(-1)));
 const packed = run('tar', ['-tzf', tarball]).split('\n').filter(Boolean).map(file => file.replace(/^package\//, '')).sort();
-const expectedModels = Object.keys(locked);
+// The tarball ships the four pack files and no other model file; the rest stays on Hugging Face.
+const {PACKS} = await import(new URL('../dist/packs/index.js', import.meta.url).href);
+const expectedModels = Object.values(PACKS).map(pack => pack.asset);
 const allowed = file => ['package.json', 'README.md', 'LICENSE', 'NOTICE.md'].includes(file) || /^licenses\/[\w.-]+\.txt$/.test(file) ||
   /^dist\/.+\.(js|d\.ts)$/.test(file) || /^runtime\/cld3-(core\.bin\.gz|core\.json|glue\.js|glue\.d\.ts|layout\.js|layout\.d\.ts)$/.test(file) ||
   expectedModels.includes(file);
 assert.deepEqual(packed.filter(file => !allowed(file)), [], 'tarball contains files outside the published contract');
-assert.deepEqual(expectedModels.filter(file => !packed.includes(file)), [], 'tarball lacks released model files');
+assert.deepEqual(expectedModels.filter(file => !packed.includes(file)), [], 'tarball lacks a pack file');
 summary.steps.pack = {tarball: basename(tarball), files: packed.length};
 log('packed', {tarball: basename(tarball), files: packed.length});
 
@@ -196,18 +198,20 @@ for (const block of browserPages) {
 }
 await writeFile(join(www, 'snippets/manifest.json'), JSON.stringify(browserPages.map(b => ({id: b.id, source: `${b.source}:${b.line}`, expected: b.expected}))));
 
-// Node.js reference predictions for the browser parity test, computed with the installed package.
+// Node.js reference predictions for the browser parity test, computed with the installed package's runtime. Model
+// bytes come from the hash-verified local copies: the package ships only the four pack files.
 const fixtures = JSON.parse(await readFile(join(root, 'tests/native-fixtures.json'), 'utf8')).map(item => item.text);
 const parity = run('node', ['--input-type=module', '-e', `
   import {readFileSync} from 'node:fs';
   import {LidModel} from 'defuss-lid';
   import {createCld3Pack} from 'defuss-lid/cld3-pack';
   const files = ${JSON.stringify(Object.keys(locked).filter(f => /\.(dlid|cld3q)$/.test(f)))};
+  const root = ${JSON.stringify(root)};
   const texts = ${JSON.stringify(fixtures)};
   const core = readFileSync(new URL(import.meta.resolve('defuss-lid/runtime/cld3-core.bin.gz')));
   const out = {};
   for (const file of files) {
-    const bytes = readFileSync(new URL(import.meta.resolve('defuss-lid/' + file)));
+    const bytes = readFileSync(root + file);
     const cld3 = file.endsWith('.cld3q');
     const model = cld3 ? await createCld3Pack(bytes, {core}) : LidModel.fromBuffer(bytes);
     out[file] = texts.map(text => model.predict(text, {k: cld3 ? 1 : 3}));

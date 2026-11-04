@@ -75,9 +75,10 @@
   "files": [
     "dist",
     "runtime",
-    "models/v0.3",
-    "models/cld3-pq-dno",
-    "models/fastText-pq-dno",
+    "models/fastText-pq-dno/der_3.dlid",
+    "models/fastText-pq-dno/deferi_6.dlid",
+    "models/cld3-pq-dno/major_20.cld3q",
+    "models/cld3-pq-dno/full.cld3q",
     "README.md",
     "LICENSE",
     "NOTICE.md",

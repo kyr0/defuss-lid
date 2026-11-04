@@ -78,7 +78,7 @@ Then import the local files: `import {loadModel} from './defuss-lid/dist/index.j
 
 ## For production: install via package manager
 
-The npm package contains the runtime and the four packs (the CLD3 DNO-PQ packs under `models/cld3-pq-dno/`, the fastText packs and every other v0.3 model file under `models/v0.3/`), so nothing is downloaded at runtime:
+The npm package contains the runtime and the four pack files (`models/fastText-pq-dno/der_3.dlid`, `deferi_6.dlid` and `models/cld3-pq-dno/major_20.cld3q`, `full.cld3q`), so nothing is downloaded at runtime; every other model file stays on Hugging Face:
 
 ```sh install
 bun add defuss-lid
@@ -166,7 +166,7 @@ console.log(PACKS.major_20.kind); // cld3-pack
 | `defuss-lid/cld3` | the unmodified npm `cld3-asm@4.0.0` as an optional reference provider (install it yourself) |
 | `defuss-lid/packs` | registry: names, languages, bytes and SHA-256 of the four packs |
 | `defuss-lid/packs/{der_3,deferi_6,major_20,full}` | `load()`, `meta`, `labels`, `url` of one pack |
-| `defuss-lid/models/*`, `defuss-lid/runtime/*` | the model files and the CLD3 core, for your own loader or bundler |
+| `defuss-lid/models/*`, `defuss-lid/runtime/*` | the four pack files and the CLD3 core, for your own loader or bundler |
 
 ## Packs
 

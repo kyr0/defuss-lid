@@ -11,10 +11,7 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-02T09:19:42Z s=d9c6d40f FINDING scripts/package_release.py:excluded learn=none: exclusions added; not executed because it rewrites SHA256SUMS
 2026-11-02T09:19:42Z s=d9c6d40f FINDING scripts/verify_native.py learn=none: import moved after argument parsing; not run with fastText installed
 2026-11-02T09:38:51Z s=d9c6d40f FINDING README.md:156 packs paragraph learn=none: prose comparison, not mechanically checkable; the figures it summarizes are generated and verified
-2026-11-02T09:53:55Z s=d9c6d40f FINDING .gitignore:dist/ learn=verifier: scripts/verify.mjs site-runtime-copy now runs git check-ignore over the site files; a probe re-adding `dist/` failed with 8 findings
 2026-11-02T09:53:55Z s=d9c6d40f FINDING SHA256SUMS, scripts/package_release.py, scripts/browser_check.mjs learn=none: one-time cleanup requested by the maintainer
-2026-11-02T09:53:55Z s=d9c6d40f FINDING scripts/coverage.mjs + docs/index.html coverage block learn=verifier: `make coverage` runs scripts/coverage.mjs --check after measuring
-2026-11-02T12:05:08Z s=d9c6d40f FAIL tests.e2e.1
 2026-11-02T12:07:52Z s=d9c6d40f DONE fp=6274259d5d78 cov=96.3% paths=.github/workflows/verify.yml,README.md,bun.lock,docs/index.html(+4)
 2026-11-02T12:07:52Z s=d9c6d40f FINDING scripts/sizes.mjs:measure learn=verifier: scripts/verify.mjs check=versions fails when the verify job's node-version|bun-version|uv version differs from mise.toml; probe with node-version '26' failed as
 2026-11-02T12:07:52Z s=d9c6d40f FINDING tests/serve.test.ts:9 learn=test: the runtimes job runs this Vitest test on windows-latest, which fails on recurrence
@@ -106,3 +103,6 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-03T23:35:54Z s=b132b503 FINDING README.md:22 feature list (B evidence) learn=none: hand-written range in prose; the tables it summarizes are checked, the summary is not
 2026-11-03T23:35:54Z s=b132b503 FINDING docs/index.html footer: Pinned revision 3938e50 (P precision) learn=none: the e2e footer test checks hrefs, not labels
 2026-11-03T23:35:54Z s=b132b503 FINDING e2e/site.spec.mjs demo test; README.md:157; docs/index.html restrict example; tests/boost.test.ts learn=test: the e2e snippet runner and site tests caught every stale output; the demo link now reads the lock
+2026-11-04T00:47:04Z s=b132b503 FINDING package.json files; scripts/verify.mjs registry; scripts/e2e.mjs learn=verifier: npm package ships exactly the four registry pack files (7.80 MB -> 0.82 MB); verify.mjs fails when package.json files lists any other models/ entry, the e2e tarball check asserts the same; parity e2e loads non-pack files from their pinned HF URLs
+2026-11-04T00:50:02Z s=b132b503 DONE fp=f3d769ef667b cov=97.0% paths=.github/workflows/verify.yml,ARCH.md,Makefile,NOTICE.md(+51)
+2026-11-04T00:50:02Z s=b132b503 FINDING package.json files; scripts/verify.mjs check registry; scripts/e2e.mjs step 1 and parity step; e2e/parity.spec.mjs; examples/browser.html learn=verifier: scripts/verify.mjs registry check and the e2e tarball assertion encode the four-pack contract

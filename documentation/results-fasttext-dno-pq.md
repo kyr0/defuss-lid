@@ -1,6 +1,6 @@
 # Results: the fastText DNO-PQ packs
 
-Report of 4 November 2026. Since release 0.5.0 the fastText packs `der_3` and `deferi_6` are the DNO-PQ packs from the Hugging Face repository [kyr0/fastText-pq-dno](https://huggingface.co/kyr0/fastText-pq-dno), pinned in `models.lock.json` at revision `0e4d9d937ec3a01ea5e149ad103b9a3d12c19ddb`. The CLD3 packs are those of [results-dno-pq.md](results-dno-pq.md); the v0.3 fastText packs stay in the package under `models/v0.3/`.
+Report of 4 November 2026. Since release 0.5.0 the fastText packs `der_3` and `deferi_6` are the DNO-PQ packs from the Hugging Face repository [kyr0/fastText-pq-dno](https://huggingface.co/kyr0/fastText-pq-dno), pinned in `models.lock.json` at revision `0e4d9d937ec3a01ea5e149ad103b9a3d12c19ddb`. The CLD3 packs are those of [results-dno-pq.md](results-dno-pq.md); the v0.3 fastText packs stay on Hugging Face in [kyr0/defuss-lid-1.0](https://huggingface.co/kyr0/defuss-lid-1.0).
 
 ## What changed
 

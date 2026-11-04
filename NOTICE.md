@@ -13,8 +13,8 @@ Relevant papers: *Bag of Tricks for Efficient Text Classification* (2016) and
 Changes to the model files are recorded in each DLID header: dictionary
 bookkeeping removal, bucket sorting, portable serialization; and, for the
 experimental variants, feature pruning and weight quantization/refitting.
-Source SHA-256 digests are retained. The v0.3 files (`models/v0.3/`) used no
-labeled examples to optimize their coefficients; validation data selected a
+Source SHA-256 digests are retained. The v0.3 files (Hugging Face kyr0/defuss-lid-1.0) used
+no labeled examples to optimize their coefficients; validation data selected a
 deployment candidate.
 The observed-feature subset additionally uses allowed-language calibration
 examples to select retained words and hashed n-gram buckets. Their hash and
@@ -46,8 +46,9 @@ The DNO-PQ packs in `models/fastText-pq-dno/` (fastText, CC BY-SA 3.0) and
 FLORES-200 dev (CC BY-SA 4.0), MASSIVE 1.1 train and dev (CC BY 4.0), Tatoeba
 (CC BY 2.0 FR), and Wikinews (CC BY 2.5 and CC BY 4.0, French also CC BY-SA 4.0)
 for fastText or synthetic romanized text for CLD3. That text is not
-redistributed. Each folder's `NOTICE.md` lists the edit data, their licenses and
-the test data no pack was fitted on.
+redistributed. The `NOTICE.md` of each pack repository on Hugging Face (kyr0/fastText-pq-dno,
+kyr0/cld3-pq-dno) lists the edit data, their licenses and the test data no pack
+was fitted on.
 
 The output-aware VQ experiment is inspired by Liu et al., *Extreme Compression
 of Per-Layer Embeddings via Cross-Layer Latent Vector Quantization*,

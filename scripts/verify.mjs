@@ -133,8 +133,12 @@ await check('registry', async () => {
       if (!pkg.exports[`./packs/${pack.name}`]?.[condition]) failures.push(`package.json exports ./packs/${pack.name} lacks "${condition}"`);
     }
   }
-  for (const {target} of lock.releases) {
-    if (!pkg.files.includes(target)) failures.push(`package.json files must ship the locked model folder ${target}`);
+  // The package ships the four pack files and no other model file (models/v0.3 alone is 6.7 MB of benchmark
+  // candidates); everything else stays on Hugging Face, pinned by models.lock.json.
+  const assets = Object.values(PACKS).map(pack => pack.asset).sort();
+  const shipped = pkg.files.filter(entry => entry === 'models' || entry.startsWith('models/')).sort();
+  if (JSON.stringify(shipped) !== JSON.stringify(assets)) {
+    failures.push(`package.json files must list exactly the pack files ${assets.join(', ')} under models/, not ${shipped.join(', ')}`);
   }
   return failures;
 });

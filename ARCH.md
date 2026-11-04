@@ -37,7 +37,7 @@ flowchart LR
 ## Operations
 
 - **Configuration and policy:** no runtime configuration; behaviour is set per call (`k`, `threshold`, `languages`, `cacheSize`, `coreURL`). Gate policy lives in `.vae/VERIFY.py`, tool versions in `mise.toml`, `bun.lock` and `uv.lock`.
-- **Deployment and scaling:** the npm package ships `dist/`, `runtime/`, `models/v0.3/`, `models/fastText-pq-dno/` and `models/cld3-pq-dno/`; GitHub Pages serves `docs/` as-is. The runtime is per-process and stateless apart from each model's bounded feature cache.
+- **Deployment and scaling:** the npm package ships `dist/`, `runtime/` and the four pack files under `models/` (no other model file; `scripts/verify.mjs` and the e2e tarball check enforce it); GitHub Pages serves `docs/` as-is. The runtime is per-process and stateless apart from each model's bounded feature cache.
 - **Complexity and resources:** fastText prediction is linear in the number of characters (n-grams) times the embedding dimension, plus one classifier pass; `make bench` measured 7 to 25 µs per fixture sentence on an Apple M-series CPU. CLD3 packs reduce download size only: the full native layout (744,144 bytes of WebAssembly) is rebuilt in memory at load time.
 - **Third-party integrations:** Hugging Face (model download at setup, pinned by revision and hash; a weekly CI job checks the remote files), jsDelivr (defuss-shadcn styles for the site, pinned by version and Subresource Integrity). The runtime itself makes no network requests beyond the URLs a caller passes.
 - **Reliability:** loaders fail closed: a truncated, tampered or mismatched model or core throws before inference.
