@@ -104,9 +104,10 @@
   .lid-budget :is(th, td):first-child { padding-inline-start: .75rem; }
   .lid-budget :is(th, td):last-child { padding-inline-end: .75rem; }
   .lid-budget thead th { font-weight: 600; color: var(--foreground); }
-  .lid-budget tbody th { font-weight: 400; color: var(--muted-foreground); text-align: start; background: none; }
+  /* row labels wrap when a card is narrow, so the four-column table of full fits a phone and a two-column grid */
+  .lid-budget tbody th { font-weight: 400; color: var(--muted-foreground); text-align: start; background: none; white-space: normal; }
   .lid-budget td { color: var(--muted-foreground); }
-  /* the better value of each pair stands out by contrast; a screen reader hears "(better)" instead */
+  /* the best value of each row stands out by contrast; a screen reader hears "(better)" instead */
   .lid-budget td[data-better] { color: var(--foreground); }
   /* only the deciding figure, all-in gzipped, is bold */
   .lid-budget .lid-budget-total :is(th, td) { color: var(--foreground); font-weight: 600; }

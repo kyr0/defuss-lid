@@ -10,7 +10,8 @@
  *                    budget:<pack> (one card per recommended pack), accuracy (rows of the accuracy table)
  *
  * The README reports the model's own accuracy (`boost: false`, "Compression results" of the reports); the website shows
- * what a page gets by default, the letter boost on ("Default results"), on both sides of every comparison.
+ * what a page gets by default, the letter boost on ("Default results"), on both sides of every comparison, except the
+ * Original column of `full`: Google's CLD3 weights as released, which have no letter boost.
  *
  * Why generated: the deciding number for an application is the all-in download, pack plus runtime, and the two
  * runtimes differ by an order of magnitude (fastText is plain JavaScript, CLD3 adds a WebAssembly core). Pack sizes
@@ -100,35 +101,69 @@ export async function reportRows(heading = 'Compression results') {
   return rows;
 }
 
+/** The report with Google's original CLD3 weights, measured on the same rows as the CLD3 DNO-PQ packs. */
+const ORIGINAL_REPORT = 'documentation/results-dno-pq.md';
+const SLICES = {'FLORES sentences': 'flores', 'FLORES first 20 code points': 'first20', 'MASSIVE utterances': 'massive'};
+
 /**
- * Each recommended pack with the measured alternative for the same languages on the other runtime. The registry
- * names the pack; the report row and the alternative file follow from its set.
+ * Accuracy of Google's original CLD3 by set, from the "Google original %" column of "Against Google's original CLD3".
+ * Why this table and not "Baselines for the same output inventories" of results-v0.3.md: the card compares all three
+ * slices, and only this table has the first 20 code points. VERIFIED: the v0.3 baseline table lists FLORES and MASSIVE
+ * only, and its full row (97.81, 89.09) equals this table's (2026-11-06).
+ * The original has no letter boost: these are the weights as Google released them, so `scores` and `defaults` are the
+ * same figures.
+ */
+export async function originalRows() {
+  const report = await readFile(join(root, ORIGINAL_REPORT), 'utf8');
+  const section = report.split(/^## /m).find(part => part.startsWith("Against Google's original CLD3\n"));
+  if (!section) throw new Error(`${ORIGINAL_REPORT} has no "## Against Google's original CLD3" section`);
+  const rows = new Map();
+  for (const [, set, slice, value] of section.matchAll(/^\| (20|full) \| ([^|]+?) \| [\d,]+ \| ([\d.]+) \|/gm)) {
+    if (!SLICES[slice]) throw new Error(`${ORIGINAL_REPORT}: unknown slice "${slice}"`);
+    rows.set(set, {...rows.get(set), [SLICES[slice]]: value});
+  }
+  for (const [set, row] of rows) {
+    const missing = Object.values(SLICES).filter(key => !row[key]);
+    if (missing.length) throw new Error(`${ORIGINAL_REPORT}: set ${set} lacks ${missing.join(', ')} for Google's original CLD3`);
+  }
+  return rows;
+}
+
+/**
+ * Each recommended pack with the measured alternative for the same languages on the other runtime, and, where a card
+ * shows it, the original weights the pack was made from. The registry names the pack; the report rows and the files
+ * follow from its set.
  */
 const CHOICES = {
   der_3: {set: '3', method: 'fastText DNO-PQ', alt: {method: 'CLD3 PQ + int8', file: '3/cld3-pq-int8.cld3q'}},
   deferi_6: {set: '6', method: 'fastText DNO-PQ', alt: {method: 'CLD3 PQ + int8', file: '6/cld3-pq-int8.cld3q'}},
   major_20: {set: '20', method: 'CLD3 DNO-PQ', alt: {method: 'fastText native PQ + int8', file: '20/fasttext-native-pq-int8.dlid'}},
-  full: {set: 'full', method: 'CLD3 DNO-PQ', alt: {method: 'fastText native PQ + int8', file: 'full/fasttext-native-pq-int8.dlid'}},
+  full: {
+    set: 'full', method: 'CLD3 DNO-PQ', alt: {method: 'fastText native PQ + int8', file: 'full/fasttext-native-pq-int8.dlid'},
+    original: {method: 'CLD3 original weights', file: 'full/cld3-raw.cld3q'},
+  },
 };
 
-/** All figures of the four packs: pack, runtime, all-in (raw and gzip), accuracy, and the same for the alternative. */
+/** All figures of the four packs: pack, runtime, all-in (raw and gzip), accuracy, and the same for the comparisons. */
 export async function packFigures() {
   const {PACKS} = await import(new URL('../dist/packs/index.js', import.meta.url).href);
-  const [runtime, rows, boosted] = await Promise.all([runtimes(), reportRows(), reportRows('Default results')]);
+  const [runtime, rows, boosted, originals] = await Promise.all([runtimes(), reportRows(), reportRows('Default results'), originalRows()]);
   const figures = [];
   for (const pack of Object.values(PACKS)) {
     const choice = CHOICES[pack.name];
-    const describe = async (file, method) => {
+    const describe = async (file, method, scores, defaults) => {
       const family = method.startsWith('CLD3') ? runtime.cld3 : runtime.fasttext;
       const size = await measure([file]);
-      const [scores, defaults] = [rows, boosted].map(table => table.get(`${choice.set}|${method}`));
       if (!scores || !defaults) throw new Error(`the reports (${REPORTS.join(', ')}) lack a row for set ${choice.set}, ${method}`);
       return {method, family: family.label, pack: size, runtime: family, allIn: {raw: size.raw + family.raw, gzip: size.gzip + family.gzip}, scores, defaults};
     };
+    const measured = (file, method) => describe(file, method, ...[rows, boosted].map(table => table.get(`${choice.set}|${method}`)));
+    const original = choice.original && originals.get(choice.set);
     figures.push({
       name: pack.name, languages: [...pack.languages].sort(), kind: pack.kind,
-      own: await describe(pack.asset, choice.method),
-      alt: await describe(`models/v0.3/${choice.alt.file}`, choice.alt.method),
+      own: await measured(pack.asset, choice.method),
+      alt: await measured(`models/v0.3/${choice.alt.file}`, choice.alt.method),
+      original: choice.original && await describe(`models/v0.3/${choice.original.file}`, choice.original.method, original, original),
     });
   }
   return figures;
@@ -172,29 +207,38 @@ export async function packsTable() {
   return lines.join('\n');
 }
 
-/** Website card block: the pack size, then all-in gzipped, pack, runtime, all-in and accuracy next to the alternative. */
+/**
+ * Website card block: the pack size, then all-in gzipped, pack, runtime, all-in and accuracy next to the original
+ * weights (where the card shows them) and the alternative on the other runtime.
+ */
 export async function cardBlocks() {
   const figures = await packFigures();
   const blocks = {};
   for (const f of figures) {
     const o = f.own, a = f.alt;
-    // Smaller is better for sizes, larger for accuracy; equal values mark neither side.
-    const row = (label, mine, theirs, show, lowerIsBetter, total = false) => {
-      const better = mine === theirs ? 0 : (mine < theirs) === lowerIsBetter ? 1 : 2;
-      const cell = (value, side) => `<td class="table-cell lid-num"${better === side ? ' data-better' : ''}>${show(value)}${better === side ? '<span class="sr-only"> (better)</span>' : ''}</td>`;
-      return `<tr class="table-row${total ? ' lid-budget-total' : ''}"><th class="table-head" scope="row">${label}</th>${cell(mine, 1)}${cell(theirs, 2)}</tr>`;
+    const columns = [{figure: o, head: f.name}, ...(f.original ? [{figure: f.original, head: 'Original'}] : []), {figure: a, head: `${a.family} alternative`}];
+    // Smaller is better for sizes, larger for accuracy; only a value no other column reaches is marked. Why the unique
+    // best and not "better than the pack": with three columns a pairwise mark is ambiguous, and with two columns the
+    // unique best is exactly the old pair rule (equal values mark neither side).
+    const row = (label, pick, show, lowerIsBetter, total = false) => {
+      const values = columns.map(({figure}) => pick(figure));
+      const best = lowerIsBetter ? Math.min(...values) : Math.max(...values);
+      const marked = values.filter(value => value === best).length === 1 ? values.indexOf(best) : -1;
+      const cell = (value, i) => `<td class="table-cell lid-num"${i === marked ? ' data-better' : ''}>${show(value)}${i === marked ? '<span class="sr-only"> (better)</span>' : ''}</td>`;
+      return `<tr class="table-row${total ? ' lid-budget-total' : ''}"><th class="table-head" scope="row">${label}</th>${values.map(cell).join('')}</tr>`;
     };
-    const scoreRow = (label, key) => row(label, Number(o.defaults[key]), Number(a.defaults[key]), value => `${value.toFixed(2)}%`, false);
+    const scoreRow = (label, key) => row(label, figure => Number(figure.defaults[key]), value => `${value.toFixed(2)}%`, false);
+    const compared = f.original ? `Google's original CLD3 and ${a.family}` : a.family;
     blocks[`budget:${f.name}`] = [
       `<p class="lid-pack-bytes"><span data-bytes-label>${(o.pack.raw / 1000).toFixed(1)}</span> kB <span class="lid-pack-bytes-note">pack, ${kB(o.allIn.gzip)} all-in gzipped</span></p>`,
-      `<table class="table lid-budget" aria-label="${f.name} compared with ${a.family} for the same languages">`,
-      `<thead><tr class="table-row"><th class="table-head" scope="col"><span class="sr-only">Figure</span></th><th class="table-head lid-num" scope="col">${f.name}</th><th class="table-head lid-num" scope="col">${a.family} alternative</th></tr></thead>`,
+      `<table class="table lid-budget" aria-label="${f.name} compared with ${compared} for the same languages">`,
+      `<thead><tr class="table-row"><th class="table-head" scope="col"><span class="sr-only">Figure</span></th>${columns.map(({head}) => `<th class="table-head lid-num" scope="col">${head}</th>`).join('')}</tr></thead>`,
       '<tbody>',
       // gzipped all-in first: what a page downloads from a server that compresses, the figure to decide on
-      row('All-in, gzipped', o.allIn.gzip, a.allIn.gzip, kB, true, true),
-      row('Pack', o.pack.raw, a.pack.raw, kB, true),
-      row('Runtime', o.runtime.raw, a.runtime.raw, kB, true),
-      row('All-in', o.allIn.raw, a.allIn.raw, kB, true),
+      row('All-in, gzipped', figure => figure.allIn.gzip, kB, true, true),
+      row('Pack', figure => figure.pack.raw, kB, true),
+      row('Runtime', figure => figure.runtime.raw, kB, true),
+      row('All-in', figure => figure.allIn.raw, kB, true),
       scoreRow('FLORES sentences', 'flores'),
       scoreRow('First 20 code points', 'first20'),
       scoreRow('MASSIVE utterances', 'massive'),
@@ -217,23 +261,30 @@ export async function accuracyTable() {
   ].join('')}</tr>`).join('\n');
 }
 
-/** The pack the demo opens with and the hero features: 20 languages, the size a page downloads (gzipped). */
-const FEATURED = 'major_20';
+/**
+ * The pack the demo opens with and the hero features: every CLD3 label, the size a page downloads (gzipped). Why
+ * `full` and not `major_20`: the maintainer chose the pack that covers open-ended input (2026-11-06), and the demo's
+ * samples still work with it. VERIFIED: `full` identifies each of the 20 demo samples as its own language, reliable,
+ * with the default letter boost (Node.js probe, 2026-11-06; the e2e demo test checks the same in three browsers).
+ */
+const FEATURED = 'full';
+/** The hero's second pack: the smallest CLD3 pack for widely used languages. */
+const SMALL = 'major_20';
 
-/** Website head and hero: the featured pack's gzipped size and default accuracy, and the gzipped size of `full`. */
+/** Website head and hero: the featured pack's gzipped size and default accuracy, and the gzipped size of the small pack. */
 export async function heroBlocks() {
   const figures = Object.fromEntries((await packFigures()).map(f => [f.name, f]));
-  const top = figures[FEATURED], full = figures.full;
+  const top = figures[FEATURED], small = figures[SMALL];
   const size = bytes => `${(bytes / 1000).toFixed(1)}&nbsp;kB`;
   const plain = bytes => `${(bytes / 1000).toFixed(1)} kB`;
   const stat = (value, label) => `<div class="mk-stat"><span class="mk-stat-value">${value}</span><span class="mk-stat-label">${label}</span></div>`;
   return {
-    meta: `<meta name="description" content="Language identification with pretrained fastText and Google CLD3 models, compressed into small language packs: ${top.languages.length} languages in ${plain(top.own.pack.gzip)} gzipped, all ${full.languages.length} CLD3 labels in ${plain(full.own.pack.gzip)}. Runs in Node.js, Bun and browsers, with no inference service.">`,
-    'hero-note': `<p class="lid-hero-note"><code>${FEATURED}</code> identifies ${top.languages.length} languages from a ${size(top.own.pack.gzip)} gzipped pack, ${size(top.own.allIn.gzip)} gzipped with its WebAssembly runtime. All ${full.languages.length} CLD3 labels fit in ${size(full.own.pack.gzip)} gzipped (<code>full</code>).</p>`,
+    meta: `<meta name="description" content="Language identification with pretrained fastText and Google CLD3 models, compressed into small language packs: all ${top.languages.length} CLD3 labels in ${plain(top.own.pack.gzip)} gzipped, ${small.languages.length} languages in ${plain(small.own.pack.gzip)}. Runs in Node.js, Bun and browsers, with no inference service.">`,
+    'hero-note': `<p class="lid-hero-note"><code>${FEATURED}</code> identifies all ${top.languages.length} CLD3 labels from a ${size(top.own.pack.gzip)} gzipped pack, ${size(top.own.allIn.gzip)} gzipped with its WebAssembly runtime. ${small.languages.length} widely used languages fit in ${size(small.own.pack.gzip)} gzipped (<code>${SMALL}</code>).</p>`,
     stats: [
-      stat(size(top.own.pack.gzip), `gzipped pack file for <code>${FEATURED}</code> (${top.languages.length} languages), plus its WebAssembly runtime`),
+      stat(size(top.own.pack.gzip), `gzipped pack file for all ${top.languages.length} CLD3 labels (<code>${FEATURED}</code>), plus its WebAssembly runtime`),
       stat(`${top.own.defaults.first20}%`, `<code>${FEATURED}</code> top-1 on the first 20 code points of FLORES sentences, with the letter boost`),
-      stat(size(full.own.pack.gzip), `gzipped pack file for all ${full.languages.length} CLD3 labels (<code>full</code>)`),
+      stat(size(small.own.pack.gzip), `gzipped pack file for ${small.languages.length} widely used languages (<code>${SMALL}</code>)`),
       stat('0', 'inference servers: it runs where your code runs'),
     ].join('\n'),
   };

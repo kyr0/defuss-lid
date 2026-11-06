@@ -76,14 +76,14 @@ test('hero: claim, runtimes and calls to action', async ({page}) => {
   await expect(page.locator('h1')).toHaveText('Extremely lightweight language identification');
   await expect(page.locator('.lid-runtimes li')).toHaveText(['Node.js', 'Bun', 'Browsers']);
   // The band and the note are generated (scripts/sizes.mjs, checked by verify.mjs); here they must agree with the
-  // major_20 card and accuracy row of the same page, which the packs and accuracy tests check against their sources.
+  // full card and accuracy row of the same page, which the packs and accuracy tests check against their sources.
   const stats = page.locator('.lid-band .mk-stat-value');
   await expect(stats).toHaveCount(4);
   await expect(stats.nth(0)).toHaveText(/^\d+\.\d\u00a0kB$/);
-  const first20 = await page.locator('#accuracy-table tr[data-pack="major_20"] [data-cell]').nth(5).textContent();
+  const first20 = await page.locator('#accuracy-table tr[data-pack="full"] [data-cell]').nth(5).textContent();
   await expect(stats.nth(1)).toHaveText(`${first20}%`);
   await expect(stats.nth(3)).toHaveText('0');
-  const allIn = await page.locator('#packs [data-pack="major_20"] .lid-budget tbody tr').first().locator('td').first().textContent();
+  const allIn = await page.locator('#packs [data-pack="full"] .lid-budget tbody tr').first().locator('td').first().textContent();
   await expect(page.locator('.lid-hero-note')).toContainText(`${allIn.replace(' (better)', '').replace(' ', '\u00a0')} gzipped with its WebAssembly runtime`);
   await page.getByRole('link', {name: 'Try the live demo'}).click();
   await expect(page.locator('#demo-title')).toBeInViewport();
@@ -110,12 +110,12 @@ test('theme toggle switches dark mode and persists across reloads', async ({page
   await expect(toggle).not.toBeChecked();
 });
 
-test('demo: opens with major_20, one sample per major_20 language, each identified as itself', async ({page}) => {
+test('demo: opens with full, one sample per major_20 language, each identified as itself', async ({page}) => {
   await open(page);
   const rows = page.locator('#demo-results li');
   const registry = await page.evaluate(async () => (await import(new URL('assets/lib/dist/packs/index.js', document.baseURI).href)).PACKS);
-  await expect(page.locator('#demo-model')).toHaveValue('major_20');
-  await expect(page.locator('#demo-bytes')).toHaveText(`${(registry.major_20.bytes / 1000).toFixed(1)} kB`);
+  await expect(page.locator('#demo-model')).toHaveValue('full');
+  await expect(page.locator('#demo-bytes')).toHaveText(`${(registry.full.bytes / 1000).toFixed(1)} kB`);
   const samples = page.locator('.lid-samples [data-sample]');
   const codes = await samples.evaluateAll(items => items.map(item => item.dataset.sample));
   expect([...codes].sort()).toEqual([...registry.major_20.languages].sort());
@@ -224,14 +224,24 @@ test('packs: cards match the runtime registry and models.lock.json', async ({pag
     await expect(card.locator('.lid-import')).toHaveText(`defuss-lid/packs/${pack.name}`);
     expect(locked[pack.asset].bytes).toBe(pack.bytes);
   }
-  await expect(page.locator('#packs .lid-pack')).toHaveCount(4);
-  // the budget table adds up: all-in = pack + runtime, in both columns, and each pair marks at most one side better
+  // the CLD3 packs come first, the full pack first of all
+  expect(await page.locator('#packs .lid-pack').evaluateAll(cards => cards.map(card => card.dataset.pack))).toEqual(['full', 'major_20', 'der_3', 'deferi_6']);
+  // the budget table adds up: all-in = pack + runtime, in every column, and each row marks at most one value better
   for (const table of await page.locator('#packs .lid-budget').all()) {
     const kB = async (row, column) => Number((await table.locator(`tbody tr:nth-child(${row}) td:nth-of-type(${column})`).textContent()).replace(/ kB.*/, ''));
     await expect(table.locator('tbody tr').first().locator('th')).toHaveText('All-in, gzipped');
     // rows 2 to 4 are pack, runtime and all-in; each is rounded to 0.1 kB on its own, so the sum may be off by one step
-    for (const column of [1, 2]) expect(Math.abs((await kB(4, column)) - (await kB(2, column)) - (await kB(3, column)))).toBeLessThan(0.11);
+    const columns = await table.locator('tbody tr').first().locator('td').count();
+    for (let column = 1; column <= columns; column++) expect(Math.abs((await kB(4, column)) - (await kB(2, column)) - (await kB(3, column)))).toBeLessThan(0.11);
     for (const row of await table.locator('tbody tr').all()) expect(await row.locator('td[data-better]').count()).toBeLessThanOrEqual(1);
+  }
+  // full compares with Google's original CLD3 weights: their file in the v0.3 release and their measured accuracy
+  const full = page.locator('#packs [data-pack="full"] .lid-budget');
+  await expect(full.locator('thead th')).toHaveText(['Figure', 'full', 'Original', 'fastText alternative']);
+  const original = async row => (await full.locator(`tbody tr:nth-child(${row}) td:nth-of-type(2)`).textContent()).replace('%', '');
+  expect(await original(2)).toBe(`${(locked['models/v0.3/full/cld3-raw.cld3q'].bytes / 1000).toFixed(1)} kB`);
+  for (const [row, slice] of [[5, 'FLORES sentences'], [6, 'FLORES first 20 code points'], [7, 'MASSIVE utterances']]) {
+    expect(report, `Google original, ${slice}`).toMatch(new RegExp(`^\\| full \\| ${slice} \\| [\\d,]+ \\| ${(await original(row)).replace('.', '\\.')} \\|`, 'm'));
   }
   const all = page.locator('#packs [data-pack="full"] details');
   await expect(all.locator('.lid-langs')).toBeHidden();

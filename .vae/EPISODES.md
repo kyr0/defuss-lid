@@ -13,11 +13,6 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-02T09:38:51Z s=d9c6d40f FINDING README.md:156 packs paragraph learn=none: prose comparison, not mechanically checkable; the figures it summarizes are generated and verified
 2026-11-02T09:53:55Z s=d9c6d40f FINDING SHA256SUMS, scripts/package_release.py, scripts/browser_check.mjs learn=none: one-time cleanup requested by the maintainer
 2026-11-02T12:07:52Z s=d9c6d40f FINDING README.md:174 P (precision) learn=none: one-off wording; the figures themselves are gate-checked
-2026-11-02T12:22:36Z s=d9c6d40f FINDING tests/test_runtime.py:29 (+46 sibling calls in defuss_lid/, scripts/, tests/) learn=test: tests/test_text_encoding.py scans every Python file of defuss_lid/, scripts/ and tests/ and fails on a text-mode call without encoding; it failed before the fix
-2026-11-02T20:32:07Z s=b132b503 FAIL prose
-2026-11-02T20:38:41Z s=b132b503 DONE fp=c106ca1b520e cov=96.9% paths=ARCH.md,README.md,docs/index.html,e2e/site.spec.mjs(+8)
-2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:share learn=test: tests/boost.test.ts 'a language written in Latin or another script counts the better-fitting one, not both' (Компания Apple: ru 8/13, sr 7/13)
-2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:checkTop1 learn=test: tests/boost.test.ts 'tied candidates replace the answer only when it explains none of the letters' (Arabic text vs ja; eBayやCraigsl stays ja)
 2026-11-02T20:38:41Z s=b132b503 FINDING scripts/sizes.mjs:runtimes learn=none: closure() derives the file list from the imports, so there is no chunk-name list left to drift; scripts/verify.mjs 'generated' recomputes the blocks with it
 2026-11-02T20:38:41Z s=b132b503 FINDING src/charsets.ts:qu,lb,li,ig,mg,cy,da,sv,fi,sa,mai,bh,ja,zh learn=none: the check needs the FLORES-200 corpora, which are downloaded outside git, so it cannot run in the gate
 2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:module doc learn=none: documentation wording
@@ -106,3 +101,8 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-05T07:32:56Z s=b132b503 FINDING docs/index.html header, menu sheet, CTA learn=test: e2e/site.spec.mjs header test
 2026-11-05T07:32:56Z s=b132b503 FINDING docs/assets/site.css header container query learn=none: the e2e suite checks overflow only at 390 px; a one-off probe measured the other widths
 2026-11-06T15:56:40Z s=4ddebb2f DONE fp=49848e9ee960 cov=97.0% paths=README.md,docs/index.html,e2e/site.spec.mjs
+2026-11-06T15:59:20Z s=4ddebb2f DONE fp=63a68efc3bfa cov=97.0% paths=README.md,docs/assets/site.css,docs/index.html,e2e/site.spec.mjs
+2026-11-06T16:30:06Z s=4ddebb2f DONE fp=9c4c2e0bd682 cov=97.0% paths=README.md,docs/assets/site.css,docs/index.html,e2e/site.spec.mjs(+1)
+2026-11-06T16:30:06Z s=4ddebb2f FINDING docs/assets/site.css .lid-budget tbody th learn=test: e2e phone-width test asserts zero horizontal overflow at 390 px, which the four-column table would fail
+2026-11-06T16:30:06Z s=4ddebb2f FINDING scripts/sizes.mjs header comment learn=none: comment accuracy is not mechanically checkable
+2026-11-06T16:30:06Z s=4ddebb2f FINDING scripts/sizes.mjs originalRows learn=none: defensive guard on a generator input; the report currently has all three slices and verify.mjs recomputes the block
