@@ -18,7 +18,6 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:module doc learn=none: documentation wording
 2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:checkTop1 doc + ARCH.md:13 learn=none: one-off measurements recorded with their date
 2026-11-02T20:38:41Z s=b132b503 FINDING src/cld3-pack.ts:Cld3Prediction.reliable learn=none: documentation wording
-2026-11-02T20:38:41Z s=b132b503 FINDING README.md:23,142-145 learn=verifier: vae.py prose check in the gate
 2026-11-02T20:48:03Z s=b132b503 DONE fp=688c268538f7 cov=96.9% paths=ARCH.md,README.md,defuss_lid/__init__.py,docs/assets/site.css(+14)
 2026-11-02T23:30:58Z s=b132b503 FAIL tests.e2e.1
 2026-11-02T23:46:56Z s=b132b503 DONE fp=71893694e987 cov=96.9% paths=ARCH.md,README.md,defuss_lid/__init__.py,dnp-tools/cld3/README.md(+18)
@@ -106,3 +105,4 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-06T16:30:06Z s=4ddebb2f FINDING docs/assets/site.css .lid-budget tbody th learn=test: e2e phone-width test asserts zero horizontal overflow at 390 px, which the four-column table would fail
 2026-11-06T16:30:06Z s=4ddebb2f FINDING scripts/sizes.mjs header comment learn=none: comment accuracy is not mechanically checkable
 2026-11-06T16:30:06Z s=4ddebb2f FINDING scripts/sizes.mjs originalRows learn=none: defensive guard on a generator input; the report currently has all three slices and verify.mjs recomputes the block
+2026-11-06T16:40:17Z s=4ddebb2f DONE fp=840aafd9f21d cov=97.0% paths=README.md,docs/assets/site.css,docs/index.html,e2e/site.spec.mjs(+1)

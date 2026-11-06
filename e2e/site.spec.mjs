@@ -75,16 +75,26 @@ test('hero: claim, runtimes and calls to action', async ({page}) => {
   await open(page);
   await expect(page.locator('h1')).toHaveText('Extremely lightweight language identification');
   await expect(page.locator('.lid-runtimes li')).toHaveText(['Node.js', 'Bun', 'Browsers']);
-  // The band and the note are generated (scripts/sizes.mjs, checked by verify.mjs); here they must agree with the
-  // full card and accuracy row of the same page, which the packs and accuracy tests check against their sources.
+  // The band is generated (scripts/sizes.mjs, checked by verify.mjs); here it must agree with the full card and
+  // accuracy row of the same page, which the packs and accuracy tests check against their sources: each figure of
+  // full above the same figure of Google's original weights (the card's Original column).
+  const registry = await page.evaluate(async () => (await import(new URL('assets/lib/dist/packs/index.js', document.baseURI).href)).PACKS);
   const stats = page.locator('.lid-band .mk-stat-value');
+  const originals = page.locator('.lid-band .lid-stat-original');
   await expect(stats).toHaveCount(4);
+  await expect(page.locator('.lid-band .lid-stat-vs')).toHaveText(Array(4).fill('vs. original'));
   await expect(stats.nth(0)).toHaveText(/^\d+\.\d\u00a0kB$/);
-  const first20 = await page.locator('#accuracy-table tr[data-pack="full"] [data-cell]').nth(5).textContent();
+  await expect(originals.nth(0)).toHaveText(/^\d+\.\d\u00a0kB$/);
+  const [, , , , flores, first20] = await page.locator('#accuracy-table tr[data-pack="full"] [data-cell]').allTextContents();
+  const original = async row => (await page.locator(`#packs [data-pack="full"] .lid-budget tbody tr:nth-child(${row}) td:nth-of-type(2)`).textContent());
   await expect(stats.nth(1)).toHaveText(`${first20}%`);
-  await expect(stats.nth(3)).toHaveText('0');
-  const allIn = await page.locator('#packs [data-pack="full"] .lid-budget tbody tr').first().locator('td').first().textContent();
-  await expect(page.locator('.lid-hero-note')).toContainText(`${allIn.replace(' (better)', '').replace(' ', '\u00a0')} gzipped with its WebAssembly runtime`);
+  await expect(originals.nth(1)).toHaveText(await original(6));
+  await expect(stats.nth(2)).toHaveText(`${flores}%`);
+  await expect(originals.nth(2)).toHaveText(await original(5));
+  await expect(stats.nth(3)).toHaveText(String(registry.full.languages.length));
+  await expect(originals.nth(3)).toHaveText(String(registry.full.languages.length));
+  await expect(page.locator('.lid-band .mk-stat-label').nth(3)).toHaveText('languages and dialects');
+  await expect(page.locator('.lid-hero-note')).toHaveCount(0);
   await page.getByRole('link', {name: 'Try the live demo'}).click();
   await expect(page.locator('#demo-title')).toBeInViewport();
   await expect(page.getByRole('link', {name: 'Use it in your app'})).toHaveAttribute('href', '#use');

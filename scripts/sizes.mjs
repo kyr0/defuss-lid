@@ -6,7 +6,7 @@
  *
  * Generated blocks (between `<!-- NAME:start -->` and `<!-- NAME:end -->`):
  *   README.md        sizes (runtime and pack files), packs (all-in budget, accuracy, same-language alternative)
- *   docs/index.html  meta (page description), hero-note and stats (the default pack's gzipped size and accuracy),
+ *   docs/index.html  meta (page description), stats (the default pack's figures above Google's original weights),
  *                    budget:<pack> (one card per recommended pack), accuracy (rows of the accuracy table)
  *
  * The README reports the model's own accuracy (`boost: false`, "Compression results" of the reports); the website shows
@@ -155,7 +155,7 @@ export async function packFigures() {
       const family = method.startsWith('CLD3') ? runtime.cld3 : runtime.fasttext;
       const size = await measure([file]);
       if (!scores || !defaults) throw new Error(`the reports (${REPORTS.join(', ')}) lack a row for set ${choice.set}, ${method}`);
-      return {method, family: family.label, pack: size, runtime: family, allIn: {raw: size.raw + family.raw, gzip: size.gzip + family.gzip}, scores, defaults};
+      return {method, file, family: family.label, pack: size, runtime: family, allIn: {raw: size.raw + family.raw, gzip: size.gzip + family.gzip}, scores, defaults};
     };
     const measured = (file, method) => describe(file, method, ...[rows, boosted].map(table => table.get(`${choice.set}|${method}`)));
     const original = choice.original && originals.get(choice.set);
@@ -268,24 +268,46 @@ export async function accuracyTable() {
  * with the default letter boost (Node.js probe, 2026-11-06; the e2e demo test checks the same in three browsers).
  */
 const FEATURED = 'full';
-/** The hero's second pack: the smallest CLD3 pack for widely used languages. */
+/** The page description's second pack: the smallest CLD3 pack for widely used languages. */
 const SMALL = 'major_20';
 
-/** Website head and hero: the featured pack's gzipped size and default accuracy, and the gzipped size of the small pack. */
+/**
+ * Labels of a CLD3 pack file, as the runtime reads them from its container. Why load the file instead of reusing the
+ * featured pack's registry entry: the original's count must come from the original's own file, or the comparison
+ * would show the pack against itself. VERIFIED: full/cld3-raw.cld3q and full.cld3q both list the same 109 labels
+ * (Node.js probe, 2026-11-06).
+ */
+async function cld3Labels(file) {
+  const {createCld3Pack} = await import(new URL('../dist/cld3-pack.js', import.meta.url).href);
+  const [pack, core] = await Promise.all([readFile(join(root, file)), readFile(join(root, 'runtime/cld3-core.bin.gz'))]);
+  const model = await createCld3Pack(pack, {core});
+  try {
+    return model.meta.labels;
+  } finally {
+    model.dispose();
+  }
+}
+
+/**
+ * Website head: the page description, and the band of the featured pack's figures, each above the same figure of
+ * Google's original weights. The original has no letter boost, so the accuracy labels say the boost is the pack's.
+ */
 export async function heroBlocks() {
   const figures = Object.fromEntries((await packFigures()).map(f => [f.name, f]));
-  const top = figures[FEATURED], small = figures[SMALL];
+  const top = figures[FEATURED], small = figures[SMALL], original = top.original;
+  if (!original) throw new Error(`${FEATURED} has no original weights to compare with (CHOICES.${FEATURED}.original)`);
+  const originalLabels = await cld3Labels(original.file);
   const size = bytes => `${(bytes / 1000).toFixed(1)}&nbsp;kB`;
   const plain = bytes => `${(bytes / 1000).toFixed(1)} kB`;
-  const stat = (value, label) => `<div class="mk-stat"><span class="mk-stat-value">${value}</span><span class="mk-stat-label">${label}</span></div>`;
+  const stat = (value, versus, label) => `<div class="mk-stat"><span class="mk-stat-value">${value}</span><span class="lid-stat-vs">vs. original</span><span class="lid-stat-original">${versus}</span><span class="mk-stat-label">${label}</span></div>`;
+  const boost = 'with the letter boost, which the original lacks';
   return {
     meta: `<meta name="description" content="Language identification with pretrained fastText and Google CLD3 models, compressed into small language packs: all ${top.languages.length} CLD3 labels in ${plain(top.own.pack.gzip)} gzipped, ${small.languages.length} languages in ${plain(small.own.pack.gzip)}. Runs in Node.js, Bun and browsers, with no inference service.">`,
-    'hero-note': `<p class="lid-hero-note"><code>${FEATURED}</code> identifies all ${top.languages.length} CLD3 labels from a ${size(top.own.pack.gzip)} gzipped pack, ${size(top.own.allIn.gzip)} gzipped with its WebAssembly runtime. ${small.languages.length} widely used languages fit in ${size(small.own.pack.gzip)} gzipped (<code>${SMALL}</code>).</p>`,
     stats: [
-      stat(size(top.own.pack.gzip), `gzipped pack file for all ${top.languages.length} CLD3 labels (<code>${FEATURED}</code>), plus its WebAssembly runtime`),
-      stat(`${top.own.defaults.first20}%`, `<code>${FEATURED}</code> top-1 on the first 20 code points of FLORES sentences, with the letter boost`),
-      stat(size(small.own.pack.gzip), `gzipped pack file for ${small.languages.length} widely used languages (<code>${SMALL}</code>)`),
-      stat('0', 'inference servers: it runs where your code runs'),
+      stat(size(top.own.pack.gzip), size(original.pack.gzip), `gzipped pack file for all ${top.languages.length} CLD3 labels (<code>${FEATURED}</code>), plus its WebAssembly runtime`),
+      stat(`${top.own.defaults.first20}%`, `${original.defaults.first20}%`, `<code>${FEATURED}</code> top-1 on the first 20 code points of FLORES sentences, ${boost}`),
+      stat(`${top.own.defaults.flores}%`, `${original.defaults.flores}%`, `<code>${FEATURED}</code> top-1 on FLORES sentences, ${boost}`),
+      stat(String(top.languages.length), String(originalLabels.length), 'languages and dialects'),
     ].join('\n'),
   };
 }

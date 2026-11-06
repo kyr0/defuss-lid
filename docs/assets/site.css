@@ -8,7 +8,7 @@
   /* component rules set display, which would otherwise beat the hidden attribute */
   [hidden] { display: none !important; }
   code { font-family: var(--font-mono); font-size: .875em; }
-  :where(p, li, dd) > code, .mk-hero-desc code, .lid-hero-note code, .mk-stat-label code {
+  :where(p, li, dd) > code, .mk-hero-desc code, .mk-stat-label code {
     padding: .1em .35em; border-radius: var(--radius-sm); background: color-mix(in oklab, var(--muted) 85%, transparent);
   }
 
@@ -31,9 +31,11 @@
   .lid-accent { background: linear-gradient(90deg, var(--chart-1), var(--chart-3)); -webkit-background-clip: text; background-clip: text; color: transparent; white-space: nowrap; }
   .lid-runtimes { display: flex; flex-wrap: wrap; justify-content: center; gap: .5rem; margin: .25rem 0; padding: 0; list-style: none; }
   .lid-runtimes .badge { gap: .35rem; }
-  .lid-hero-note { margin: .5rem 0 0; max-width: 34rem; font-size: .875rem; color: var(--muted-foreground); text-wrap: pretty; }
   .lid-band .mk-stats-band { border-radius: var(--radius-xl); }
   .lid-band .mk-stat-value { font-variant-numeric: tabular-nums; }
+  /* each figure of the featured pack stands above the same figure of Google's original weights, smaller and muted */
+  .lid-band .lid-stat-vs { font-size: .75rem; color: var(--muted-foreground); }
+  .lid-band .lid-stat-original { font-size: 1.125rem; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--muted-foreground); margin-block-end: .25rem; }
   .lid-band .mk-stat-label code { background: color-mix(in oklch, currentColor 14%, transparent); }
 
   /* ---- demo ------------------------------------------------------------------------------------------------------ */
