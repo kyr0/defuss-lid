@@ -12,11 +12,7 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-02T09:19:42Z s=d9c6d40f FINDING scripts/verify_native.py learn=none: import moved after argument parsing; not run with fastText installed
 2026-11-02T09:38:51Z s=d9c6d40f FINDING README.md:156 packs paragraph learn=none: prose comparison, not mechanically checkable; the figures it summarizes are generated and verified
 2026-11-02T09:53:55Z s=d9c6d40f FINDING SHA256SUMS, scripts/package_release.py, scripts/browser_check.mjs learn=none: one-time cleanup requested by the maintainer
-2026-11-02T12:07:52Z s=d9c6d40f DONE fp=6274259d5d78 cov=96.3% paths=.github/workflows/verify.yml,README.md,bun.lock,docs/index.html(+4)
-2026-11-02T12:07:52Z s=d9c6d40f FINDING scripts/sizes.mjs:measure learn=verifier: scripts/verify.mjs check=versions fails when the verify job's node-version|bun-version|uv version differs from mise.toml; probe with node-version '26' failed as
-2026-11-02T12:07:52Z s=d9c6d40f FINDING tests/serve.test.ts:9 learn=test: the runtimes job runs this Vitest test on windows-latest, which fails on recurrence
 2026-11-02T12:07:52Z s=d9c6d40f FINDING README.md:174 P (precision) learn=none: one-off wording; the figures themselves are gate-checked
-2026-11-02T12:22:36Z s=d9c6d40f DONE fp=153a33e44ac4 cov=96.3% paths=defuss_lid/cld3_pack.py,defuss_lid/evaluate.py,scripts/build_candidates.py,scripts/build_cld3.py(+17)
 2026-11-02T12:22:36Z s=d9c6d40f FINDING tests/test_runtime.py:29 (+46 sibling calls in defuss_lid/, scripts/, tests/) learn=test: tests/test_text_encoding.py scans every Python file of defuss_lid/, scripts/ and tests/ and fails on a text-mode call without encoding; it failed before the fix
 2026-11-02T20:32:07Z s=b132b503 FAIL prose
 2026-11-02T20:38:41Z s=b132b503 DONE fp=c106ca1b520e cov=96.9% paths=ARCH.md,README.md,docs/index.html,e2e/site.spec.mjs(+8)
@@ -106,3 +102,7 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-04T00:47:04Z s=b132b503 FINDING package.json files; scripts/verify.mjs registry; scripts/e2e.mjs learn=verifier: npm package ships exactly the four registry pack files (7.80 MB -> 0.82 MB); verify.mjs fails when package.json files lists any other models/ entry, the e2e tarball check asserts the same; parity e2e loads non-pack files from their pinned HF URLs
 2026-11-04T00:50:02Z s=b132b503 DONE fp=f3d769ef667b cov=97.0% paths=.github/workflows/verify.yml,ARCH.md,Makefile,NOTICE.md(+51)
 2026-11-04T00:50:02Z s=b132b503 FINDING package.json files; scripts/verify.mjs check registry; scripts/e2e.mjs step 1 and parity step; e2e/parity.spec.mjs; examples/browser.html learn=verifier: scripts/verify.mjs registry check and the e2e tarball assertion encode the four-pack contract
+2026-11-05T07:32:56Z s=b132b503 DONE fp=0570d7fdab1b cov=97.0% paths=.github/workflows/verify.yml,ARCH.md,Makefile,NOTICE.md(+51)
+2026-11-05T07:32:56Z s=b132b503 FINDING docs/index.html header, menu sheet, CTA learn=test: e2e/site.spec.mjs header test
+2026-11-05T07:32:56Z s=b132b503 FINDING docs/assets/site.css header container query learn=none: the e2e suite checks overflow only at 390 px; a one-off probe measured the other widths
+2026-11-06T15:56:40Z s=4ddebb2f DONE fp=49848e9ee960 cov=97.0% paths=README.md,docs/index.html,e2e/site.spec.mjs

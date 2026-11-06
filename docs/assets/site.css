@@ -234,3 +234,11 @@
 
 /* A sample button inside running text (the boost hint): reads as a link, keeps the line height. */
 .lid-inline-sample { display: inline; height: auto; padding: 0; font-size: inherit; vertical-align: baseline; text-decoration: underline; }
+
+/* Header: five nav links and four actions wrap below ~60rem (defuss-shadcn switches at 40rem), so the menu sheet,
+   which holds the same links, takes over until the full row fits. */
+@container mk-header (width < 60rem) {
+  .mk-header-nav { display: none; }
+  .mk-header-menu { display: inline-flex; }
+  .mk-header-actions .mk-header-wide { display: none; }
+}

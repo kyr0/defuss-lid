@@ -62,7 +62,10 @@ test('header: brand, nav anchors, external links', async ({page}) => {
   await expect(page).toHaveURL(/#accuracy$/);
   await expect(page.locator('#accuracy-title')).toBeInViewport();
   await expect(page.locator('header a[href="https://github.com/kyr0/defuss-lid"]').first()).toBeVisible();
-  await expect(page.locator('header a[href="https://huggingface.co/kyr0/defuss-lid-1.0"]').first()).toBeVisible();
+  // the header links the two model repositories the packs come from
+  for (const repo of ['fastText-pq-dno', 'cld3-pq-dno']) {
+    await expect(page.locator(`header a[href="https://huggingface.co/kyr0/${repo}"]`).first()).toBeVisible();
+  }
   await expect(page.locator('header a[href="https://www.npmjs.com/package/defuss-lid"]').first()).toBeVisible();
   await page.locator('.mk-header-brand').click();
   await expect(page).toHaveURL(/#top$/);
@@ -339,13 +342,14 @@ test('footer: licenses, links and author', async ({page}) => {
   const footer = page.locator('footer.mk-footer');
   for (const href of [
     'https://github.com/kyr0/defuss-lid',
-    'https://huggingface.co/kyr0/defuss-lid-1.0',
     'https://huggingface.co/kyr0/fastText-pq-dno',
     'https://huggingface.co/kyr0/cld3-pq-dno',
     'https://www.npmjs.com/package/defuss-lid',
     'https://github.com/kyr0/defuss-lid/tree/main/documentation',
     'https://github.com/kyr0/defuss-lid/blob/main/NOTICE.md',
   ]) await expect(footer.locator(`a[href="${href}"]`), href).toHaveCount(1);
+  // the site links the two model repositories the packs come from, not the v0.3 release
+  await expect(page.locator('a[href^="https://huggingface.co/kyr0/defuss-lid-1.0"]')).toHaveCount(0);
   await expect(footer).toContainText('Code: MIT');
   await expect(footer).toContainText('fastText-derived weights: CC BY-SA 3.0');
   await expect(footer).toContainText('CLD3 weights: Apache-2.0');

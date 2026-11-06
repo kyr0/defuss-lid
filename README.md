@@ -2,7 +2,6 @@
 
 [![CI](https://github.com/kyr0/defuss-lid/actions/workflows/verify.yml/badge.svg)](https://github.com/kyr0/defuss-lid/actions/workflows/verify.yml)
 [![npm](https://img.shields.io/npm/v/defuss-lid)](https://www.npmjs.com/package/defuss-lid)
-[![Models](https://img.shields.io/badge/%F0%9F%A4%97%20models-kyr0%2Fdefuss--lid--1.0-yellow)](https://huggingface.co/kyr0/defuss-lid-1.0)
 [![fastText DNO-PQ](https://img.shields.io/badge/%F0%9F%A4%97%20fastText-kyr0%2FfastText--pq--dno-yellow)](https://huggingface.co/kyr0/fastText-pq-dno)
 [![CLD3 DNO-PQ](https://img.shields.io/badge/%F0%9F%A4%97%20CLD3-kyr0%2Fcld3--pq--dno-yellow)](https://huggingface.co/kyr0/cld3-pq-dno)
 [![License](https://img.shields.io/badge/license-MIT%20%7C%20CC%20BY--SA%203.0%20%7C%20Apache--2.0-blue)](NOTICE.md)
@@ -260,7 +259,7 @@ If you use defuss-lid in research or want to reference it, cite it as:
   year         = {2026},
   version      = {0.5.0},
   howpublished = {\url{https://github.com/kyr0/defuss-lid}},
-  note         = {Models: \url{https://huggingface.co/kyr0/defuss-lid-1.0}}
+  note         = {Models: \url{https://huggingface.co/kyr0/fastText-pq-dno}, \url{https://huggingface.co/kyr0/cld3-pq-dno}}
 }
 ```
 
