@@ -3,7 +3,8 @@
 @layer components {
   /* the base reset the defuss-shadcn docs site applies, which its marketing blocks assume */
   *, *::before, *::after { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
+  /* the page reads one step larger than the browser default; every rem-based size scales with it */
+  html { scroll-behavior: smooth; font-size: 125%; }
   body { margin: 0; line-height: 1.6; background: var(--background); color: var(--foreground); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
   /* component rules set display, which would otherwise beat the hidden attribute */
   [hidden] { display: none !important; }
@@ -15,8 +16,9 @@
   /* clip, not hidden: the sticky header must keep working */
   .lid-page { overflow-x: clip; }
   .lid-main { display: flex; flex-direction: column; align-items: center; gap: clamp(4.5rem, 10vw, 8rem); padding-block-end: clamp(4.5rem, 10vw, 8rem); }
-  /* every section: 76rem column, a 1rem (16px) gutter on phones; nested marketing blocks drop their own gutter */
-  .lid-section { width: 100%; max-width: 76rem; margin-inline: auto; padding-inline: 1rem; scroll-margin-top: 5.5rem; min-width: 0; }
+  /* every section: 76rem column, a 16px gutter on phones (px, not rem: the 125% root would widen it and narrow the
+     column the larger text needs); nested marketing blocks drop their own gutter */
+  .lid-section { width: 100%; max-width: 76rem; margin-inline: auto; padding-inline: 16px; scroll-margin-top: 5.5rem; min-width: 0; }
   .lid-section > :is(.mk-features, .mk-cta), .lid-hero-wrap > :is(.mk-hero, .mk-stats) { padding-inline: 0; }
   .lid-icon { width: 1em; height: 1em; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -24,7 +26,7 @@
   .lid-skip:focus-visible { translate: 0 0; }
 
   /* ---- hero ------------------------------------------------------------------------------------------------------ */
-  .lid-hero-wrap { width: 100%; max-width: 76rem; padding-inline: 1rem; display: flex; flex-direction: column; gap: clamp(2rem, 6vw, 3.5rem); }
+  .lid-hero-wrap { width: 100%; max-width: 76rem; padding-inline: 16px; display: flex; flex-direction: column; gap: clamp(2rem, 6vw, 3.5rem); }
   .lid-hero-wrap .mk-hero[data-variant="glow"] { padding-block: clamp(3.5rem, 9vw, 6rem) 0; }
   .mk-hero-pill { text-decoration: none; color: inherit; }
   .mk-hero-pill > span:not(.badge) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -93,7 +95,7 @@
   .lid-packs { display: grid; gap: 1rem; margin-block-start: 2.5rem; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 48rem) { .lid-packs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   /* .card is a plain block: a flex column lets the content grow, so every footer sits on the card's bottom edge */
-  .lid-pack { display: flex; flex-direction: column; min-width: 0; }
+  .lid-pack { display: flex; flex-direction: column; min-width: 0; container: lid-pack / inline-size; }
   .lid-pack .card-description code { white-space: nowrap; }
   .lid-pack-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; flex-wrap: wrap; }
   .lid-pack .card-title code { font-size: 1.125rem; padding: 0; background: none; }
@@ -102,6 +104,12 @@
   .lid-pack-bytes-note { font-size: .875rem; font-weight: 500; letter-spacing: 0; color: var(--muted-foreground); }
   .lid-budget { width: 100%; margin-block: .25rem; font-size: .8125rem; }
   .lid-budget :is(th, td) { padding: .3rem .5rem; height: auto; }
+  /* a narrow card (a phone, or the two-column grid on a tablet) sets its table smaller and tighter, so the
+     four-column table of full fits at the 125% root size */
+  @container lid-pack (width < 24rem) {
+    /* on the cells: defuss-shadcn sizes .table-head and .table-cell itself */
+    .lid-budget :is(th, td) { font-size: .6875rem; padding-inline: .3rem; }
+  }
   /* inset both ends so the header band and the last column do not touch the card edge */
   .lid-budget :is(th, td):first-child { padding-inline-start: .75rem; }
   .lid-budget :is(th, td):last-child { padding-inline-end: .75rem; }
@@ -151,7 +159,9 @@
   .lid-scroll-hint { display: none; }
   @media (max-width: 48rem) { .lid-scroll-hint { display: inline; } }
   .lid-table-card { padding: 0; overflow: hidden; }
-  .lid-table-scroll { max-width: 100%; overflow-x: auto; }
+  /* positioned, so absolutely positioned descendants (the sr-only "(better)" notes) scroll with the table instead of
+     widening the page */
+  .lid-table-scroll { position: relative; max-width: 100%; overflow-x: auto; }
   .lid-table-scroll:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
   #accuracy-table { min-width: 44rem; }
   #accuracy-table :is(th, td) { padding-inline: 1rem; }

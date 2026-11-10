@@ -231,6 +231,9 @@ export async function cardBlocks() {
     const compared = f.original ? `Google's original CLD3 and ${a.family}` : a.family;
     blocks[`budget:${f.name}`] = [
       `<p class="lid-pack-bytes"><span data-bytes-label>${(o.pack.raw / 1000).toFixed(1)}</span> kB <span class="lid-pack-bytes-note">pack, ${kB(o.allIn.gzip)} all-in gzipped</span></p>`,
+      // the page's scroll region for wide tables: the four-column table of full is wider than a phone-width card at
+      // the 125% root size even with the narrow-card cells (site.css), so it scrolls inside the card, not the page
+      `<div class="lid-table-scroll" tabindex="0" role="region" aria-label="${f.name} compared with ${compared} for the same languages">`,
       `<table class="table lid-budget" aria-label="${f.name} compared with ${compared} for the same languages">`,
       `<thead><tr class="table-row"><th class="table-head" scope="col"><span class="sr-only">Figure</span></th>${columns.map(({head}) => `<th class="table-head lid-num" scope="col">${head}</th>`).join('')}</tr></thead>`,
       '<tbody>',
@@ -244,6 +247,7 @@ export async function cardBlocks() {
       scoreRow('MASSIVE utterances', 'massive'),
       '</tbody>',
       '</table>',
+      '</div>',
     ].join('\n');
   }
   return blocks;

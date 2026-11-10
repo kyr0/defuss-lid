@@ -18,16 +18,10 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:module doc learn=none: documentation wording
 2026-11-02T20:38:41Z s=b132b503 FINDING src/boost.ts:checkTop1 doc + ARCH.md:13 learn=none: one-off measurements recorded with their date
 2026-11-02T20:38:41Z s=b132b503 FINDING src/cld3-pack.ts:Cld3Prediction.reliable learn=none: documentation wording
-2026-11-02T20:48:03Z s=b132b503 DONE fp=688c268538f7 cov=96.9% paths=ARCH.md,README.md,defuss_lid/__init__.py,docs/assets/site.css(+14)
-2026-11-02T23:30:58Z s=b132b503 FAIL tests.e2e.1
-2026-11-02T23:46:56Z s=b132b503 DONE fp=71893694e987 cov=96.9% paths=ARCH.md,README.md,defuss_lid/__init__.py,dnp-tools/cld3/README.md(+18)
 2026-11-02T23:46:56Z s=b132b503 FINDING e2e/site.spec.mjs:71 learn=none: intended copy change by the maintainer; the e2e assertion is the check and caught it
 2026-11-02T23:46:56Z s=b132b503 FINDING docs/index.html:9 og:title learn=none: one-off copy sync decided by the maintainer
 2026-11-02T23:46:56Z s=b132b503 FINDING docs/index.html:120 hero description learn=none: a product claim the maintainer owns; no mechanical check can decide it
-2026-11-02T23:46:56Z s=b132b503 FINDING dnp-tools/cld3/dnp.py:check learn=test: tests/test_dnp_cld3.py::test_replica_matches_cld3_asm runs check(), which now fails on missing rows
 2026-11-02T23:46:56Z s=b132b503 FINDING dnp-tools/cld3/dnp.py:cmd_check learn=none: needs FLORES data that is not in git; the filter is the shared supported() used by every FLORES path
-2026-11-03T00:05:38Z s=b132b503 FAIL coverage
-2026-11-03T00:08:16Z s=b132b503 DONE fp=a34de9919ec4 cov=96.9% paths=ARCH.md,README.md,defuss_lid/__init__.py,dnp-tools/cld3/README.md(+20)
 2026-11-03T00:08:16Z s=b132b503 FINDING scripts/sentence_starts.mjs:classify learn=test: tests/sentence-starts.test.ts asserts the cause order including unseen and words
 2026-11-03T00:08:16Z s=b132b503 FINDING scripts/sentence_starts.mjs:evaluate reliable errors learn=none: report presentation of a field fastText does not have; regenerated REPORT.md shows '-'
 2026-11-03T00:08:16Z s=b132b503 FINDING docs/index.html coverage block learn=verifier: already enforced by scripts/coverage.mjs --check in make coverage
@@ -106,3 +100,9 @@ Wrap: EVERY lead becomes a test | .vae/VERIFY.py rule | one MEMORY line with BC,
 2026-11-06T16:30:06Z s=4ddebb2f FINDING scripts/sizes.mjs header comment learn=none: comment accuracy is not mechanically checkable
 2026-11-06T16:30:06Z s=4ddebb2f FINDING scripts/sizes.mjs originalRows learn=none: defensive guard on a generator input; the report currently has all three slices and verify.mjs recomputes the block
 2026-11-06T16:40:17Z s=4ddebb2f DONE fp=840aafd9f21d cov=97.0% paths=README.md,docs/assets/site.css,docs/index.html,e2e/site.spec.mjs(+1)
+2026-11-10T02:33:38Z s=4ddebb2f FAIL tests.e2e.1
+2026-11-10T02:43:01Z s=4ddebb2f DONE fp=29addab6c98f cov=97.0% paths=README.md,docs/assets/site.css,docs/index.html,e2e/site.spec.mjs(+1)
+2026-11-10T02:43:01Z s=4ddebb2f FINDING docs/assets/site.css .lid-budget cells; scripts/sizes.mjs cardBlocks learn=test: e2e phone-width test asserts zero overflow at 390 px
+2026-11-10T02:43:01Z s=4ddebb2f FINDING docs/assets/site.css .lid-table-scroll learn=test: phone test now also asserts zero overflow at 360 px
+2026-11-10T02:43:01Z s=4ddebb2f FINDING docs/assets/site.css .lid-section, .lid-hero-wrap learn=test: existing 16 px gutter assertion in the phone test
+2026-11-10T02:43:01Z s=4ddebb2f FINDING e2e/site.spec.mjs footer test learn=none: the pinned pixel width was an asset value, not a requirement

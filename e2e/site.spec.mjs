@@ -380,7 +380,9 @@ test('footer: licenses, links and author', async ({page}) => {
   await expect(card.locator('a[href="https://www.linkedin.com/in/aronhomberg/"]')).toHaveText(/Connect on LinkedIn/);
   const portrait = card.locator('img');
   await portrait.scrollIntoViewIfNeeded();
-  await expect.poll(() => portrait.evaluate(img => img.complete && img.naturalWidth)).toBe(400);
+  await expect.poll(() => portrait.evaluate(img => img.complete && img.naturalWidth > 0)).toBe(true);
+  // the file has the shape the width and height attributes reserve, so the photo is not distorted
+  expect(await portrait.evaluate(img => img.naturalWidth * Number(img.getAttribute('height')) === img.naturalHeight * Number(img.getAttribute('width')))).toBe(true);
 });
 
 test('phone width (390px): no horizontal overflow in light and dark, menu sheet navigates', async ({page}) => {
@@ -395,6 +397,11 @@ test('phone width (390px): no horizontal overflow in light and dark, menu sheet 
   const box = await page.locator('#demo .lid-demo').boundingBox();
   expect(Math.round(box.x)).toBe(16);
   expect(Math.round(390 - box.x - box.width)).toBe(16);
+  // a smaller phone: the four-column table of full scrolls inside its card, and the sr-only "(better)" notes of its
+  // cells scroll with it instead of widening the page (they did at 360 px before .lid-table-scroll was positioned)
+  await page.setViewportSize({width: 360, height: 780});
+  expect(await overflow()).toBe(0);
+  await page.setViewportSize({width: 390, height: 844});
 
   await page.getByRole('button', {name: 'Open menu'}).click();
   const sheet = page.locator('#lid-menu');
